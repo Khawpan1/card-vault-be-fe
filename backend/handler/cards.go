@@ -17,7 +17,7 @@ func (a *API) listCards(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusBadRequest, "invalid_filter", "ช่องค้นหาแต่ละช่องต้องไม่เกิน 100 ตัวอักษร")
 		return
 	}
-	if game != "" && game != "yugioh" && game != "mtg" && game != "pokemon" {
+	if game != "" && game != "yugioh" && game != "mtg" && game != "pokemon" && game != "onepiece" {
 		WriteError(w, http.StatusBadRequest, "invalid_game", "เกมไม่ถูกต้อง")
 		return
 	}
@@ -127,7 +127,7 @@ func (a *API) deleteCard(w http.ResponseWriter, r *http.Request) {
 }
 
 func validCard(c card) bool {
-	if c.Game != "yugioh" && c.Game != "mtg" && c.Game != "pokemon" {
+	if c.Game != "yugioh" && c.Game != "mtg" && c.Game != "pokemon" && c.Game != "onepiece" {
 		return false
 	}
 	setNameOK := c.SetName == nil || len(*c.SetName) <= 255

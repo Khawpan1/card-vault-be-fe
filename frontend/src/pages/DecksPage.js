@@ -5,7 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import CardTile from '../components/CardTile';
 import { Empty, ErrorMessage, Loading } from '../components/LoadState';
 
-const gameNames = { yugioh: 'Yu-Gi-Oh!', mtg: 'Magic: The Gathering', pokemon: 'Pokémon TCG' };
+const gameNames = { yugioh: 'Yu-Gi-Oh!', mtg: 'Magic: The Gathering', pokemon: 'Pokémon TCG', onepiece: 'One Piece Card Game' };
 
 function DeckEditor({ deck, onClose, onSaved }) {
   const [form, setForm] = useState({ game: deck?.game || 'yugioh', name: deck?.name || '', description: deck?.description || '', isPublic: deck?.isPublic || false });

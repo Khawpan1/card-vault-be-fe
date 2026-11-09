@@ -36,10 +36,10 @@ function HomePage() {
   return <main className="mx-auto max-w-7xl px-4 py-16">
     <p className="mb-3 text-sm font-semibold uppercase tracking-[.2em] text-vault-teal">Your cards, your strategy</p>
     <h1 className="max-w-3xl text-4xl font-black leading-tight sm:text-6xl">คลังการ์ดเดียว<br/><span className="text-vault-gold">จัดเด็คได้ทุกเกม</span></h1>
-    <p className="mt-5 max-w-xl text-vault-cream/70">สำรวจการ์ด Yu-Gi-Oh!, Magic: The Gathering และ Pokémon TCG พร้อมสร้างเด็คในแบบของคุณ</p>
+    <p className="mt-5 max-w-xl text-vault-cream/70">สำรวจการ์ด Yu-Gi-Oh!, Magic: The Gathering, Pokémon TCG และ One Piece พร้อมสร้างเด็คในแบบของคุณ</p>
     <Link to="/cards" className="mt-8 inline-block rounded bg-vault-orange px-5 py-3 font-bold text-white">เปิดคลังการ์ด</Link>
-    <div className="mt-16 grid gap-4 sm:grid-cols-3">
-      {['Yu-Gi-Oh!', 'Magic: The Gathering', 'Pokémon TCG'].map((game) => <div key={game} className="rounded-xl border border-white/10 bg-white/[.04] p-5"><p className="text-xs uppercase text-vault-teal">Card archive</p><h2 className="mt-2 text-lg font-bold">{game}</h2></div>)}
+    <div className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {['Yu-Gi-Oh!', 'Magic: The Gathering', 'Pokémon TCG', 'One Piece Card Game'].map((game) => <div key={game} className="rounded-xl border border-white/10 bg-white/[.04] p-5"><p className="text-xs uppercase text-vault-teal">Card archive</p><h2 className="mt-2 text-lg font-bold">{game}</h2></div>)}
     </div>
   </main>;
 }
@@ -60,5 +60,5 @@ export default function App() {
       <Route path="/admin" element={<ProtectedRoute admin/>}><Route index element={<AdminPage/>}/></Route>
     </Route>
     <Route path="*" element={<main className="p-12 text-center">ไม่พบหน้าที่ต้องการ</main>}/>
-  </Routes><footer className="mt-16 border-t border-white/10 px-4 py-6 text-center text-xs text-vault-cream/50">ข้อมูลการ์ด: YGOPRODeck · Scryfall · Pokémon TCG API</footer></div></BrowserRouter></AuthProvider>;
+  </Routes><footer className="mt-16 border-t border-white/10 px-4 py-6 text-center text-xs text-vault-cream/50">ข้อมูลการ์ด: YGOPRODeck · Scryfall · TCGdex · OPTCG API</footer></div></BrowserRouter></AuthProvider>;
 }

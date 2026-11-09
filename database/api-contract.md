@@ -64,8 +64,14 @@ All `/admin/*` routes require a verified JWT whose role is `admin`.
   `type`, `desc`, `card_sets[].set_rarity`, and `card_images[].image_url`.
 - Magic: Scryfall `/cards/search`; source fields include `id`, `name`, `type_line`,
   `rarity`, `oracle_text`, and `image_uris` (or the first face's image URI).
-- Pokémon: Pokémon TCG API v2 `/cards`; source fields include `id`, `name`,
-  `supertype`/`subtypes`/`types`, `rarity`, `rules`/`abilities`/`attacks`, and
-  `images.large`.
+- Pokémon: TCGdex Thai `/v2/th/cards` for localized card briefs, then `/v2/th/cards/{id}`
+  for details; source fields include `name`, `category`, `types`, `stage`, `rarity`,
+  `attacks`, `abilities`, `effect`/`description`, `image`, and `set`.
+- One Piece: OPTCG API `/api/allSetCards/`; source fields include `card_set_id`,
+  `set_id`, `card_name`, `card_type`, `rarity`, `card_text`, and `card_image`.
+
+The one-time seed currently targets 500 complete cards each for Yu-Gi-Oh!, MTG,
+and Thai Pokémon, plus all 3,557 complete One Piece records returned by the source.
+These counts describe the generated seed file; repeated upserts may update existing IDs.
 
 The seed stores source identifiers and image URLs. It does not download image files.

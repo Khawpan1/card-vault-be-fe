@@ -9,7 +9,7 @@ import (
 
 func (a *API) listCollection(w http.ResponseWriter, r *http.Request) {
 	game := r.URL.Query().Get("game")
-	if game != "" && game != "yugioh" && game != "mtg" && game != "pokemon" {
+	if game != "" && game != "yugioh" && game != "mtg" && game != "pokemon" && game != "onepiece" {
 		WriteError(w, http.StatusBadRequest, "invalid_game", "เกมไม่ถูกต้อง")
 		return
 	}

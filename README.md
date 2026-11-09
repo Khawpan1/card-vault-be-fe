@@ -1,6 +1,6 @@
 # Card Vault
 
-เว็บคลังการ์ดและจัดเด็คสำหรับ Yu-Gi-Oh!, Magic: The Gathering และ Pokémon TCG
+เว็บคลังการ์ดและจัดเด็คสำหรับ Yu-Gi-Oh!, Magic: The Gathering, Pokémon TCG และ One Piece Card Game
 
 ## โครงสร้างโปรเจกต์
 
@@ -21,7 +21,8 @@
    ```
 
    สคริปต์เรียก API ต้นทางครั้งเดียวและสร้าง `database/seed.sql`; หลัง schema ให้รันไฟล์นี้กับฐานข้อมูลเดียวกัน (ใช้ซ้ำได้เพราะ upsert ตามรหัสต้นทาง)
-   Pokémon TCG API ไม่บังคับใช้ key สำหรับ seed ปริมาณนี้ แต่ใช้ `POKEMON_TCG_API_KEY` เป็น environment variable ได้ถ้ามี
+   Seed ปัจจุบันมี Yu-Gi-Oh! 500 ใบ, MTG 500 ใบ, Pokémon ภาษาไทย 500 ใบ และ One Piece ที่มีข้อมูลหลักครบ 3,557 ใบ
+   Pokémon ใช้ TCGdex ภาษาไทย; เกมอื่นใช้ภาษาที่ API มีให้ สคริปต์ seed เรียก API ภายนอกเฉพาะตอนสร้างข้อมูลครั้งเดียว
 3. ตั้งค่า Backend ใน Terminal:
 
    ```powershell
@@ -70,9 +71,9 @@ Go อ่าน environment variables จากระบบหรือแพล
 
 ## ที่มาข้อมูลการ์ด
 
-รายละเอียดและ URL รูปจาก [YGOPRODeck](https://ygoprodeck.com/), [Scryfall](https://scryfall.com/) และ [Pokémon TCG API](https://pokemontcg.io/). เว็บแสดงเครดิตแหล่งข้อมูลและเก็บเฉพาะ URL รูปตามข้อกำหนดโครงงาน
+รายละเอียดและ URL รูปจาก [YGOPRODeck](https://ygoprodeck.com/), [Scryfall](https://scryfall.com/), [TCGdex ภาษาไทย](https://tcgdex.dev/) และ [OPTCG API](https://www.optcgapi.com/documentation). เว็บแสดงเครดิตแหล่งข้อมูลและเก็บเฉพาะ URL รูปตามข้อกำหนดโครงงาน
 
-หมายเหตุ: [คู่มือ YGOPRODeck](https://ygoprodeck.com/api-guide/) ขอให้เก็บรูปไว้เองแทนการ hotlink ซึ่งขัดกับข้อกำหนดโครงงานที่ให้เก็บ URL เท่านั้น; ชุดนี้ทำตามข้อกำหนดโครงงานและยังไม่ดาวน์โหลดรูป ส่วน [Pokémon TCG API](https://docs.pokemontcg.io/getting-started/authentication/) ใช้ได้โดยไม่ใส่ key สำหรับ seed ปริมาณน้อย แต่ key ช่วยเพิ่ม rate limit; เอกสารระบุ API ปัจจุบัน deprecated, ไม่เปิดบัญชีใหม่ และ key เดิมใช้ได้ถึง 1 มีนาคม 2027
+หมายเหตุ: TCGdex มีชุดข้อมูลภาษาไทย; YGOPRODeck, Scryfall และ OPTCG API ใช้ข้อมูลภาษาอังกฤษใน seed นี้ เพราะไม่มีชุดภาษาไทยที่ API เหล่านั้นเปิดให้ใช้ได้ตรงกัน เว็บไม่เรียก API ภายนอกระหว่างใช้งานปกติ
 
 ## Checklist เกณฑ์ประเมิน
 
@@ -82,8 +83,8 @@ Go อ่าน environment variables จากระบบหรือแพล
 - [x] ค้น/กรองการ์ด, ดูรายละเอียด, ดูเด็คสาธารณะ และสถานะ Loading / Empty / Error
 - [x] สมาชิกสร้าง/แก้/ลบเด็ค, จัดการจำนวนการ์ด, เก็บคอลเลกชัน และแก้โปรไฟล์
 - [x] ผู้ดูแลจัดการการ์ด/สมาชิก และกลั่นกรองเด็ค/รีวิว
-- [x] Schema PostgreSQL และ seed เกมละ 40 ใบ
-- [x] สร้าง Supabase project `card-vault-be-fe` (Singapore) และรัน schema/seed แล้ว; ตรวจพบ 40 ใบต่อเกมใน PostgreSQL จริง
+- [x] Schema PostgreSQL และ seed: 500 ใบต่อเกมหลัก พร้อม One Piece 3,557 ใบ
+- [x] Supabase มี schema, migration เพิ่ม One Piece และ seed ชุดขยายแล้ว
 - [x] React Unit Test ผ่าน 4 กรณี: Loading/ข้อมูล, Empty, Error/retry และสร้างเด็ค/เพิ่มการ์ด
 - [x] แยก `frontend/`, `backend/`, `database/` ชัดเจน
 - [ ] ทดสอบ Backend เชื่อม PostgreSQL จริงและสาธิต flow หลังตั้ง `DATABASE_URL` สำหรับ Render
@@ -96,6 +97,6 @@ Go อ่าน environment variables จากระบบหรือแพล
 - Project: `card-vault-be-fe` (region Southeast Asia / Singapore)
 - PostgreSQL project ref: `dogwxvewpvnzdbkyjtuy`
 - Source: [Khawpan1/card-vault-be-fe](https://github.com/Khawpan1/card-vault-be-fe) (private)
-- `schema.sql` และ `seed.sql` รันสำเร็จแล้ว; ตาราง `cards` มี yugioh 40, mtg 40 และ pokemon 40 แถว
+- `schema.sql`, migration `database/migrations/001_add_onepiece.sql` และ `seed.sql` รันสำเร็จแล้ว; seed ชุดขยายเพิ่ม 5,057 แถว
 - ใช้ Go ต่อ PostgreSQL โดยตรง จึงปิด Data API ไว้; ไม่ต้องใช้ Supabase client หรือเปิด RLS สำหรับ browser
 - รหัสผ่านฐานข้อมูลเป็นความลับและไม่ได้เก็บใน repository; หากต้องเชื่อม Render ให้ตั้งรหัสใหม่ใน Supabase แล้วเก็บใน Environment ของ Render เป็น `DATABASE_URL`
