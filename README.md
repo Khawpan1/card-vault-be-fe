@@ -85,18 +85,32 @@ Go อ่าน environment variables จากระบบหรือแพล
 - [x] ผู้ดูแลจัดการการ์ด/สมาชิก และกลั่นกรองเด็ค/รีวิว
 - [x] Schema PostgreSQL และ seed: 500 ใบต่อเกมหลัก พร้อม One Piece 3,557 ใบ
 - [x] Supabase มี schema, migration เพิ่ม One Piece และ seed ชุดขยายแล้ว
-- [x] React Unit Test ผ่าน 4 กรณี: Loading/ข้อมูล, Empty, Error/retry และสร้างเด็ค/เพิ่มการ์ด
+- [x] React Unit Test ผ่าน 4 tests ใน 2 suites: Loading/ข้อมูล, Empty, Error/retry และสร้างเด็ค/เพิ่มการ์ด
 - [x] แยก `frontend/`, `backend/`, `database/` ชัดเจน
-- [ ] ทดสอบ Backend เชื่อม PostgreSQL จริงและสาธิต flow หลังตั้ง `DATABASE_URL` สำหรับ Render
+- [x] Backend บน Render เชื่อม PostgreSQL บน Supabase; ตรวจหน้า API ผ่านข้อมูลการ์ดจริง 5,136 ใบ
 - [x] สร้าง private GitHub repository และ push branch `main`
 - [x] Deploy database บน Supabase และ seed ข้อมูลจริง
-- [ ] Deploy Frontend บน Vercel และ Backend บน Render
+- [x] Deploy Frontend บน Vercel และ Backend บน Render
+
+### สถานะ Deploy ที่ตรวจแล้ว
+
+- Frontend: [Card Vault บน Vercel](https://frontend-wheat-kappa-70.vercel.app/)
+- Backend: [Card Vault API บน Render](https://card-vault-be-fe.onrender.com/api/health)
+- Frontend ใช้ `REACT_APP_API_URL=https://card-vault-be-fe.onrender.com/api`
+- Render ตั้ง `FRONTEND_ORIGIN` เป็น origin ของ Vercel แล้ว และ deploy ล่าสุดสำเร็จ
+- ตรวจหน้า `/cards` จากเว็บจริงแล้ว: API ส่งการ์ด 5,136 ใบและแสดงรายการได้
+- Render แพ็กเกจ Free อาจพักเมื่อไม่มีผู้ใช้ ทำให้คำขอแรกหลังพักใช้เวลาตื่นระบบนาน
+
+การตรวจออนไลน์ครั้งนี้ครอบคลุมการเปิดเว็บ, การเรียก API จริงและการแสดงคลังการ์ด
+ยังควรให้ทีมลอง flow สมาชิกและ Admin ด้วยบัญชีของทีมก่อนสาธิต เพราะการทดสอบ CRUD
+บนข้อมูล production อาจสร้างหรือแก้ไขข้อมูลจริง
 
 ### สถานะ Supabase
 
 - Project: `card-vault-be-fe` (region Southeast Asia / Singapore)
 - PostgreSQL project ref: `dogwxvewpvnzdbkyjtuy`
 - Source: [Khawpan1/card-vault-be-fe](https://github.com/Khawpan1/card-vault-be-fe) (private)
-- `schema.sql`, migration `database/migrations/001_add_onepiece.sql` และ `seed.sql` รันสำเร็จแล้ว; seed ชุดขยายเพิ่ม 5,057 แถว
+- `schema.sql`, migration `database/migrations/001_add_onepiece.sql` และ `seed.sql` รันสำเร็จแล้ว; seed ชุดขยายเพิ่มข้อมูลการ์ด One Piece และเกมอื่นในฐานข้อมูล
 - ใช้ Go ต่อ PostgreSQL โดยตรง จึงปิด Data API ไว้; ไม่ต้องใช้ Supabase client หรือเปิด RLS สำหรับ browser
-- รหัสผ่านฐานข้อมูลเป็นความลับและไม่ได้เก็บใน repository; หากต้องเชื่อม Render ให้ตั้งรหัสใหม่ใน Supabase แล้วเก็บใน Environment ของ Render เป็น `DATABASE_URL`
+- รหัสผ่านฐานข้อมูลและ JWT secret เก็บเป็น Environment Variables ใน Render เท่านั้น ไม่อยู่ใน repository
+- ห้ามคัดลอกหรือส่งค่าลับจากหน้า Environment Variables ลง README, GitHub หรือแชต
