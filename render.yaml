@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: card-vault-api
+    runtime: go
+    plan: free
+    rootDir: backend
+    buildCommand: go build -o app ./cmd/server
+    startCommand: ./app
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_ORIGIN
+        sync: false
