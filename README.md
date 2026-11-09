@@ -87,12 +87,15 @@ Go อ่าน environment variables จากระบบหรือแพล
 - [x] React Unit Test ผ่าน 4 กรณี: Loading/ข้อมูล, Empty, Error/retry และสร้างเด็ค/เพิ่มการ์ด
 - [x] แยก `frontend/`, `backend/`, `database/` ชัดเจน
 - [ ] ทดสอบ Backend เชื่อม PostgreSQL จริงและสาธิต flow หลังตั้ง `DATABASE_URL` สำหรับ Render
-- [ ] Deploy จริงบน Vercel / Render / Supabase (ต้องเชื่อมบัญชีและ repository ของทีม)
+- [x] สร้าง private GitHub repository และ push branch `main`
+- [x] Deploy database บน Supabase และ seed ข้อมูลจริง
+- [ ] Deploy Frontend บน Vercel และ Backend บน Render
 
 ### สถานะ Supabase
 
 - Project: `card-vault-be-fe` (region Southeast Asia / Singapore)
 - PostgreSQL project ref: `dogwxvewpvnzdbkyjtuy`
+- Source: [Khawpan1/card-vault-be-fe](https://github.com/Khawpan1/card-vault-be-fe) (private)
 - `schema.sql` และ `seed.sql` รันสำเร็จแล้ว; ตาราง `cards` มี yugioh 40, mtg 40 และ pokemon 40 แถว
 - ใช้ Go ต่อ PostgreSQL โดยตรง จึงปิด Data API ไว้; ไม่ต้องใช้ Supabase client หรือเปิด RLS สำหรับ browser
 - รหัสผ่านฐานข้อมูลเป็นความลับและไม่ได้เก็บใน repository; หากต้องเชื่อม Render ให้ตั้งรหัสใหม่ใน Supabase แล้วเก็บใน Environment ของ Render เป็น `DATABASE_URL`
