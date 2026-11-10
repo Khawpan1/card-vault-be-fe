@@ -4,15 +4,16 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Leelawadee UI"', '"Noto Sans Thai"', 'Tahoma', 'system-ui', 'sans-serif']
+        sans: ['Tahoma', '"Leelawadee UI"', 'Arial', 'system-ui', 'sans-serif'],
+        display: ['"Arial Rounded MT Bold"', 'Tahoma', 'Arial', 'sans-serif']
       },
       colors: {
         vault: {
-          background: "#1A1423",
-          gold: "#D4AF37",
-          orange: "#FF6F00",
-          teal: "#5BC0BE",
-          cream: "#F8F1E5"
+          background: "#F4F1EB",
+          gold: "#F5A000",
+          orange: "#F36B21",
+          teal: "#258A88",
+          cream: "#171717"
         }
       }
     }

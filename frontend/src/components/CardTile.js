@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 
 export default function CardTile({ card }) {
-  return <article className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[.035] shadow-lg shadow-black/10">
+  return <article className="group overflow-hidden rounded-2xl border border-black/10 bg-white/[.035] shadow-lg shadow-black/10">
     <Link to={`/cards/${card.id}`} className="block focus:outline-none focus:ring-2 focus:ring-inset focus:ring-vault-gold">
       <div className="overflow-hidden bg-black/20"><img src={card.imageUrl} alt={card.name} loading="lazy" className="aspect-[3/4] w-full object-contain"/></div>
       <div className="p-3.5">

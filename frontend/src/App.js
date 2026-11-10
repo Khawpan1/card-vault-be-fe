@@ -12,11 +12,11 @@ import ProtectedRoute from './auth/ProtectedRoute';
 
 function Header() {
   const { member, logout } = useAuth();
-  const navClass = ({ isActive }) => `rounded-lg px-3 py-2 transition-colors ${isActive ? 'bg-white/[.08] text-vault-gold' : 'text-vault-cream/75 hover:bg-white/[.05] hover:text-vault-cream'}`;
+  const navClass = ({ isActive }) => `rounded-lg px-3 py-2 transition-colors ${isActive ? 'bg-white/10 text-vault-gold' : 'text-white/80 hover:bg-white/[.06] hover:text-white'}`;
   return (
-    <header className="sticky top-0 z-20 border-b border-white/10 bg-vault-background/95 backdrop-blur-sm">
+    <header className="sticky top-0 z-20 border-b border-white/10 bg-zinc-950 text-white shadow-lg">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-        <Link className="flex items-center gap-2 text-lg font-black tracking-wide text-vault-gold sm:text-xl" to="/"><span className="grid h-9 w-9 place-items-center rounded-xl bg-vault-gold text-sm text-vault-background">CV</span><span>CARD VAULT</span></Link>
+        <Link className="flex items-center gap-2 text-lg font-black tracking-wide text-white sm:text-xl" to="/"><span className="grid h-9 w-9 place-items-center rounded-xl bg-vault-orange text-sm text-white">CV</span><span>CARD VAULT</span></Link>
         <nav className="flex flex-wrap items-center gap-1 text-sm" aria-label="เมนูหลัก">
           <NavLink to="/cards" className={navClass}>คลังการ์ด</NavLink>
           <NavLink to="/decks" className={navClass}>เด็คสาธารณะ</NavLink>
@@ -26,7 +26,7 @@ function Header() {
             <NavLink to="/profile" className={navClass}>โปรไฟล์</NavLink>
             {member.role === 'admin' && <NavLink to="/admin" className={navClass}>จัดการระบบ</NavLink>}
             <button className="ml-1 rounded-lg border border-vault-gold/70 px-3 py-2 font-semibold text-vault-gold hover:bg-vault-gold hover:text-vault-background" onClick={logout}>ออกจากระบบ</button>
-          </> : <Link to="/login" className="ml-1 rounded-lg bg-vault-gold px-4 py-2 font-bold text-vault-background hover:bg-[#e3c34d]">เข้าสู่ระบบ</Link>}
+          </> : <Link to="/login" className="ml-1 rounded-lg bg-vault-orange px-4 py-2 font-bold text-white hover:bg-[#ff853f]">เข้าสู่ระบบ</Link>}
         </nav>
       </div>
     </header>
@@ -78,5 +78,5 @@ export default function App() {
       <Route path="/admin" element={<ProtectedRoute admin/>}><Route index element={<AdminPage/>}/></Route>
     </Route>
     <Route path="*" element={<main className="p-12 text-center">ไม่พบหน้าที่ต้องการ</main>}/>
-  </Routes><footer className="mt-16 border-t border-white/10 px-4 py-6 text-center text-xs text-vault-cream/50">ข้อมูลการ์ด: YGOPRODeck · Scryfall · TCGdex · OPTCG API</footer></div></BrowserRouter></AuthProvider>;
+  </Routes><footer className="mt-16 border-t border-zinc-800 bg-zinc-950 px-4 py-6 text-center text-xs text-white/60">ข้อมูลการ์ด: YGOPRODeck · Scryfall · TCGdex · OPTCG API</footer></div></BrowserRouter></AuthProvider>;
 }
