@@ -36,7 +36,7 @@ function Header() {
 const homeGames = [
   { id: 'yugioh', name: 'Yu-Gi-Oh!', mark: 'DUEL', detail: 'ค้นหาการ์ดและสร้างเด็ค', color: 'from-[#8c3f20] to-[#331c2e]', edge: 'border-vault-orange/40', imageUrl: 'https://www.konami.com/yugioh/assets/images/mainvisual/yugikaiba-pc.webp', sourceUrl: 'https://www.konami.com/yugioh/' },
   { id: 'mtg', name: 'Magic: The Gathering', mark: 'MTG', detail: 'สำรวจการ์ดจากหลายสี', color: 'from-[#365d58] to-[#1b2535]', edge: 'border-vault-teal/40', imageUrl: 'https://images.ctfassets.net/s5n2t79q9icq/7kryiegbYrwL91aijourES/1970bc51ea02bdb38e2049a11217c976/vbsoasdbnd8383_1920x700.png?q=80&w=1920&h=700&fit=crop&f=center&fm=webp', sourceUrl: 'https://magic.wizards.com/en' },
-  { id: 'pokemon', name: 'Pokémon TCG', mark: 'POKÉMON', detail: 'ค้นหาการ์ดโปเกมอน', color: 'from-[#9a7425] to-[#3d2832]', edge: 'border-vault-gold/50', imageUrl: 'https://tcg.pokemon.com/assets/img/home/tcgl/pikachu-2x.png', sourceUrl: 'https://tcg.pokemon.com/en-us/' },
+  { id: 'pokemon', name: 'Pokémon TCG', mark: 'POKÉMON', detail: 'ค้นหาการ์ดโปเกมอน', color: 'from-[#9a7425] to-[#3d2832]', edge: 'border-vault-gold/50', imageUrl: 'https://www.pokemon.com/static-assets/content-assets/cms2/img/trading-card-game/series/sv_series/sv09/sv09-banner.png', sourceUrl: 'https://www.pokemon.com/us/pokemon-tcg/scarlet-violet-journey-together' },
   { id: 'onepiece', name: 'One Piece Card Game', mark: 'ONE PIECE', detail: 'รวมพลการ์ดโจรสลัด', color: 'from-[#315476] to-[#292044]', edge: 'border-sky-300/40', imageUrl: 'https://en.onepiece-cardgame.com/onepiececg/bccard/en/banner/2026/07/15/XYfefkzZmrEkoKvM/st36_mv.webp', sourceUrl: 'https://en.onepiece-cardgame.com/' }
 ];
 
