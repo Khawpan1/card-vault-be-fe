@@ -49,15 +49,12 @@ function HomePage() {
       <p className="mx-auto mt-4 max-w-2xl leading-7 text-vault-cream/65">ค้นหาการ์ด ดูรายละเอียด และจัดเด็คจากคลังเดียว</p>
     </section>
     <section aria-label="เลือกเกมการ์ด" className="mt-10 grid gap-4 sm:grid-cols-2 lg:mt-12 lg:grid-cols-4">
-      {games.map((game, index) => <Link key={game.id} to={`/cards?game=${game.id}`} className={`group flex min-h-72 flex-col overflow-hidden rounded-2xl border ${game.edge} bg-gradient-to-br ${game.color} shadow-xl shadow-black/15 focus:outline-none focus:ring-2 focus:ring-vault-gold`}>
-        <div className="relative h-44 overflow-hidden bg-black/25">
-          <div role="img" aria-label={`ภาพประกอบธีม ${game.name}`} className="h-full w-full bg-cover transition-transform duration-300 group-hover:scale-105" style={{ backgroundImage: "url('/images/game-select-art.png')", backgroundSize: '200% 200%', backgroundPosition: game.position }}/>
-          <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/20"/>
-          <div className="absolute inset-x-4 top-4 flex items-center justify-between"><span className="rounded-full border border-white/25 bg-black/35 px-3 py-1 text-[10px] font-bold tracking-[.16em] text-white">0{index + 1} · {game.mark}</span><span aria-hidden="true" className="text-xl text-white">↗</span></div>
-        </div>
-        <div className="flex flex-1 flex-col items-start p-5">
-          <h2 className="text-lg font-black leading-snug text-white">{game.name}</h2><p className="mt-1 text-sm text-white/70">{game.detail}</p>
-          <span className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-bold text-vault-gold">เปิดคลังการ์ด <span aria-hidden="true">→</span></span>
+      {games.map((game) => <Link key={game.id} to={`/cards?game=${game.id}`} className={`group relative isolate aspect-[4/5] overflow-hidden rounded-2xl border ${game.edge} bg-gradient-to-br ${game.color} shadow-xl shadow-black/20 focus:outline-none focus:ring-2 focus:ring-vault-gold`}>
+        <div role="img" aria-label={`ภาพประกอบธีม ${game.name}`} className="absolute inset-0 -z-10 bg-cover bg-no-repeat transition-transform duration-300 group-hover:scale-105" style={{ backgroundImage: "url('/images/game-select-art.png')", backgroundSize: '200% 200%', backgroundPosition: game.position }}/>
+        <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-t from-black/90 via-black/35 to-black/10"/>
+        <div className="absolute inset-x-5 bottom-5 flex items-end justify-between gap-3 sm:inset-x-6 sm:bottom-6">
+          <div className="min-w-0"><p className="text-[11px] font-semibold tracking-[.2em] text-white/80">CARD DATABASE</p><h2 className="mt-3 text-xl font-black leading-snug text-white sm:text-2xl">{game.name}</h2><p className="mt-3 text-sm font-semibold text-white/85">{game.detail}</p></div>
+          <span aria-hidden="true" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/20 text-xl text-white ring-1 ring-white/20 group-hover:bg-vault-gold group-hover:text-vault-background">→</span>
         </div>
       </Link>)}
     </section>
