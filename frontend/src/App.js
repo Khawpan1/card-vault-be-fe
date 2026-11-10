@@ -1,8 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
 import { BrowserRouter, Link, NavLink, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthContext';
-import { request } from './api';
-import { ErrorMessage } from './components/LoadState';
 import CatalogPage from './pages/CatalogPage';
 import CardPage from './pages/CardPage';
 import AuthPage from './pages/AuthPage';
@@ -37,42 +34,24 @@ function Header() {
 }
 
 const homeGames = [
-  { id: 'yugioh', name: 'Yu-Gi-Oh!', mark: 'DUEL', detail: 'ค้นหาการ์ดและสร้างเด็ค', color: 'from-[#8c3f20] to-[#331c2e]', edge: 'border-vault-orange/40' },
-  { id: 'mtg', name: 'Magic: The Gathering', mark: 'MTG', detail: 'สำรวจการ์ดจากหลายสี', color: 'from-[#365d58] to-[#1b2535]', edge: 'border-vault-teal/40' },
-  { id: 'pokemon', name: 'Pokémon TCG', mark: 'POKÉMON', detail: 'ค้นหาการ์ดโปเกมอน', color: 'from-[#9a7425] to-[#3d2832]', edge: 'border-vault-gold/50' },
-  { id: 'onepiece', name: 'One Piece Card Game', mark: 'ONE PIECE', detail: 'รวมพลการ์ดโจรสลัด', color: 'from-[#315476] to-[#292044]', edge: 'border-sky-300/40' }
+  { id: 'yugioh', name: 'Yu-Gi-Oh!', mark: 'DUEL', detail: 'ค้นหาการ์ดและสร้างเด็ค', color: 'from-[#8c3f20] to-[#331c2e]', edge: 'border-vault-orange/40', position: '0% 0%' },
+  { id: 'mtg', name: 'Magic: The Gathering', mark: 'MTG', detail: 'สำรวจการ์ดจากหลายสี', color: 'from-[#365d58] to-[#1b2535]', edge: 'border-vault-teal/40', position: '100% 0%' },
+  { id: 'pokemon', name: 'Pokémon TCG', mark: 'POKÉMON', detail: 'ค้นหาการ์ดโปเกมอน', color: 'from-[#9a7425] to-[#3d2832]', edge: 'border-vault-gold/50', position: '0% 100%' },
+  { id: 'onepiece', name: 'One Piece Card Game', mark: 'ONE PIECE', detail: 'รวมพลการ์ดโจรสลัด', color: 'from-[#315476] to-[#292044]', edge: 'border-sky-300/40', position: '100% 100%' }
 ];
 
 function HomePage() {
-  const [covers, setCovers] = useState({});
-  const [coverError, setCoverError] = useState('');
-  const [coverLoading, setCoverLoading] = useState(true);
   const games = homeGames;
-  const loadCovers = useCallback(async () => {
-    setCoverLoading(true); setCoverError('');
-    const results = await Promise.allSettled(games.map(async (game) => {
-      const data = await request(`/cards?game=${game.id}&limit=8`);
-      return [game.id, data.items?.find((card) => card.imageUrl)?.imageUrl || ''];
-    }));
-    const images = Object.fromEntries(results.filter((result) => result.status === 'fulfilled').map((result) => result.value));
-    setCovers(images);
-    if (Object.keys(images).length === 0) setCoverError('โหลดรูปการ์ดไม่สำเร็จ');
-    setCoverLoading(false);
-  }, []);
-  useEffect(() => { loadCovers(); }, [loadCovers]);
   return <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
     <section className="mx-auto max-w-3xl text-center">
       <span className="inline-flex items-center gap-2 rounded-full border border-vault-gold/30 bg-vault-gold/[.08] px-4 py-2 text-xs font-bold tracking-wide text-vault-gold"><span aria-hidden="true">✦</span> CARD VAULT · คลังการ์ด</span>
       <h1 className="mt-6 text-4xl font-black leading-tight sm:text-5xl">เลือกเกมที่คุณชอบ</h1>
       <p className="mx-auto mt-4 max-w-2xl leading-7 text-vault-cream/65">ค้นหาการ์ด ดูรายละเอียด และจัดเด็คจากคลังเดียว</p>
     </section>
-    {coverError && <ErrorMessage message={coverError} onRetry={loadCovers}/>}
-    {coverLoading && <p role="status" className="mt-8 text-center text-sm text-vault-teal">กำลังโหลดภาพการ์ด…</p>}
     <section aria-label="เลือกเกมการ์ด" className="mt-10 grid gap-4 sm:grid-cols-2 lg:mt-12 lg:grid-cols-4">
       {games.map((game, index) => <Link key={game.id} to={`/cards?game=${game.id}`} className={`group flex min-h-72 flex-col overflow-hidden rounded-2xl border ${game.edge} bg-gradient-to-br ${game.color} shadow-xl shadow-black/15 focus:outline-none focus:ring-2 focus:ring-vault-gold`}>
         <div className="relative h-44 overflow-hidden bg-black/25">
-          {covers[game.id] && <img src={covers[game.id]} alt={`${game.name} ตัวอย่างภาพการ์ด`} loading="lazy" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"/>}
-          {!covers[game.id] && <div aria-hidden="true" className={`h-full w-full bg-gradient-to-br ${game.color}`}><div className="mx-auto mt-5 h-36 w-28 rotate-[-5deg] rounded-xl border border-white/20 bg-white/[.08] shadow-xl"/></div>}
+          <div role="img" aria-label={`ภาพประกอบธีม ${game.name}`} className="h-full w-full bg-cover transition-transform duration-300 group-hover:scale-105" style={{ backgroundImage: "url('/images/game-select-art.png')", backgroundSize: '200% 200%', backgroundPosition: game.position }}/>
           <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/20"/>
           <div className="absolute inset-x-4 top-4 flex items-center justify-between"><span className="rounded-full border border-white/25 bg-black/35 px-3 py-1 text-[10px] font-bold tracking-[.16em] text-white">0{index + 1} · {game.mark}</span><span aria-hidden="true" className="text-xl text-white">↗</span></div>
         </div>
