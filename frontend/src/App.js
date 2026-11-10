@@ -34,10 +34,10 @@ function Header() {
 }
 
 const homeGames = [
-  { id: 'yugioh', name: 'Yu-Gi-Oh!', mark: 'DUEL', detail: 'ค้นหาการ์ดและสร้างเด็ค', color: 'from-[#8c3f20] to-[#331c2e]', edge: 'border-vault-orange/40', position: '0% 0%' },
-  { id: 'mtg', name: 'Magic: The Gathering', mark: 'MTG', detail: 'สำรวจการ์ดจากหลายสี', color: 'from-[#365d58] to-[#1b2535]', edge: 'border-vault-teal/40', position: '100% 0%' },
-  { id: 'pokemon', name: 'Pokémon TCG', mark: 'POKÉMON', detail: 'ค้นหาการ์ดโปเกมอน', color: 'from-[#9a7425] to-[#3d2832]', edge: 'border-vault-gold/50', position: '0% 100%' },
-  { id: 'onepiece', name: 'One Piece Card Game', mark: 'ONE PIECE', detail: 'รวมพลการ์ดโจรสลัด', color: 'from-[#315476] to-[#292044]', edge: 'border-sky-300/40', position: '100% 100%' }
+  { id: 'yugioh', name: 'Yu-Gi-Oh!', mark: 'DUEL', detail: 'ค้นหาการ์ดและสร้างเด็ค', color: 'from-[#8c3f20] to-[#331c2e]', edge: 'border-vault-orange/40', imageUrl: 'https://www.konami.com/yugioh/assets/images/mainvisual/yugikaiba-pc.webp', sourceUrl: 'https://www.konami.com/yugioh/' },
+  { id: 'mtg', name: 'Magic: The Gathering', mark: 'MTG', detail: 'สำรวจการ์ดจากหลายสี', color: 'from-[#365d58] to-[#1b2535]', edge: 'border-vault-teal/40', imageUrl: 'https://images.ctfassets.net/s5n2t79q9icq/7kryiegbYrwL91aijourES/1970bc51ea02bdb38e2049a11217c976/vbsoasdbnd8383_1920x700.png?q=80&w=1920&h=700&fit=crop&f=center&fm=webp', sourceUrl: 'https://magic.wizards.com/en' },
+  { id: 'pokemon', name: 'Pokémon TCG', mark: 'POKÉMON', detail: 'ค้นหาการ์ดโปเกมอน', color: 'from-[#9a7425] to-[#3d2832]', edge: 'border-vault-gold/50', imageUrl: 'https://tcg.pokemon.com/assets/img/home/tcgl/pikachu-2x.png', sourceUrl: 'https://tcg.pokemon.com/en-us/' },
+  { id: 'onepiece', name: 'One Piece Card Game', mark: 'ONE PIECE', detail: 'รวมพลการ์ดโจรสลัด', color: 'from-[#315476] to-[#292044]', edge: 'border-sky-300/40', imageUrl: 'https://en.onepiece-cardgame.com/onepiececg/bccard/en/banner/2026/07/15/XYfefkzZmrEkoKvM/st36_mv.webp', sourceUrl: 'https://en.onepiece-cardgame.com/' }
 ];
 
 function HomePage() {
@@ -50,7 +50,7 @@ function HomePage() {
     </section>
     <section aria-label="เลือกเกมการ์ด" className="mt-10 grid gap-4 sm:grid-cols-2 lg:mt-12 lg:grid-cols-4">
       {games.map((game) => <Link key={game.id} to={`/cards?game=${game.id}`} className={`group relative isolate aspect-[4/5] overflow-hidden rounded-2xl border ${game.edge} bg-gradient-to-br ${game.color} shadow-xl shadow-black/20 focus:outline-none focus:ring-2 focus:ring-vault-gold`}>
-        <div role="img" aria-label={`ภาพประกอบธีม ${game.name}`} className="absolute inset-0 -z-10 bg-cover bg-no-repeat transition-transform duration-300 group-hover:scale-105" style={{ backgroundImage: "url('/images/game-select-art.png')", backgroundSize: '200% 200%', backgroundPosition: game.position }}/>
+        <img src={game.imageUrl} alt={`ภาพโปรโมต ${game.name} จากเว็บไซต์ทางการ`} loading="lazy" className="absolute inset-0 -z-10 h-full w-full bg-black/20 object-cover transition-transform duration-300 group-hover:scale-105"/>
         <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-t from-black/90 via-black/35 to-black/10"/>
         <div className="absolute inset-x-5 bottom-5 flex items-end justify-between gap-3 sm:inset-x-6 sm:bottom-6">
           <div className="min-w-0"><p className="text-[11px] font-semibold tracking-[.2em] text-white/80">CARD DATABASE</p><h2 className="mt-3 text-xl font-black leading-snug text-white sm:text-2xl">{game.name}</h2><p className="mt-3 text-sm font-semibold text-white/85">{game.detail}</p></div>
@@ -58,6 +58,7 @@ function HomePage() {
         </div>
       </Link>)}
     </section>
+    <p className="mt-5 text-center text-xs text-vault-cream/40">ภาพโปรโมตจากเว็บไซต์ทางการ:{' '}{games.map((game, index) => <span key={game.id}><a href={game.sourceUrl} target="_blank" rel="noreferrer" className="underline decoration-white/20 underline-offset-2 hover:text-vault-cream">{game.name}</a>{index < games.length - 1 ? ' · ' : ''}</span>)}</p>
   </main>;
 }
 
