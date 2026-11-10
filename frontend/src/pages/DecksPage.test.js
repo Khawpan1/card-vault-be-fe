@@ -25,6 +25,7 @@ test('สร้างเด็ค ค้นการ์ด เพิ่มลง
   fireEvent.click(screen.getByRole('button', { name: '+ สร้างเด็ค' }));
   fireEvent.change(screen.getByLabelText('ชื่อเด็ค'), { target: { value: 'My First Deck' } });
   fireEvent.change(screen.getByPlaceholderText('ค้นการ์ดในเกมที่เลือกเพื่อเพิ่ม…'), { target: { value: 'Dark Magician' } });
+  expect(await screen.findByRole('img', { name: 'Dark Magician' })).toHaveAttribute('src', card.imageUrl);
   fireEvent.click(await screen.findByRole('button', { name: /Dark Magician เพิ่มการ์ด/ }));
   fireEvent.click(screen.getByRole('button', { name: 'บันทึกเด็ค' }));
 
