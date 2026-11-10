@@ -34,16 +34,27 @@ function Header() {
 }
 
 function HomePage() {
-  return <main className="mx-auto max-w-7xl px-4 py-16">
-    <section className="overflow-hidden rounded-3xl border border-vault-gold/25 bg-gradient-to-br from-white/[.07] via-transparent to-vault-orange/[.08] px-6 py-12 sm:px-12 sm:py-16">
-      <p className="mb-3 text-xs font-bold uppercase tracking-[.22em] text-vault-teal">Your cards, your strategy</p>
-      <h1 className="max-w-3xl text-4xl font-black leading-tight sm:text-6xl">คลังการ์ดเดียว<br/><span className="text-vault-gold">จัดเด็คได้ทุกเกม</span></h1>
-      <p className="mt-5 max-w-xl leading-7 text-vault-cream/70">สำรวจการ์ด Yu-Gi-Oh!, Magic: The Gathering, Pokémon TCG และ One Piece พร้อมสร้างเด็คในแบบของคุณ</p>
-      <Link to="/cards" className="mt-8 inline-flex items-center gap-2 rounded-xl bg-vault-gold px-5 py-3 font-bold text-vault-background hover:bg-[#e3c34d]">เปิดคลังการ์ด <span aria-hidden="true">→</span></Link>
+  const games = [
+    { id: 'yugioh', name: 'Yu-Gi-Oh!', mark: 'DUEL', detail: 'ค้นหาการ์ดและสร้างเด็ค', color: 'from-[#8c3f20] to-[#331c2e]', edge: 'border-vault-orange/40' },
+    { id: 'mtg', name: 'Magic: The Gathering', mark: 'MTG', detail: 'สำรวจการ์ดจากหลายสี', color: 'from-[#365d58] to-[#1b2535]', edge: 'border-vault-teal/40' },
+    { id: 'pokemon', name: 'Pokémon TCG', mark: 'POKÉMON', detail: 'ค้นหาการ์ดโปเกมอน', color: 'from-[#9a7425] to-[#3d2832]', edge: 'border-vault-gold/50' },
+    { id: 'onepiece', name: 'One Piece Card Game', mark: 'ONE PIECE', detail: 'รวมพลการ์ดโจรสลัด', color: 'from-[#315476] to-[#292044]', edge: 'border-sky-300/40' }
+  ];
+  return <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
+    <section className="mx-auto max-w-3xl text-center">
+      <span className="inline-flex items-center gap-2 rounded-full border border-vault-gold/30 bg-vault-gold/[.08] px-4 py-2 text-xs font-bold tracking-wide text-vault-gold"><span aria-hidden="true">✦</span> CARD VAULT · คลังการ์ด</span>
+      <h1 className="mt-6 text-4xl font-black leading-tight sm:text-5xl">เลือกเกมที่คุณชอบ</h1>
+      <p className="mx-auto mt-4 max-w-2xl leading-7 text-vault-cream/65">ค้นหาการ์ด ดูรายละเอียด และจัดเด็คจากคลังเดียว</p>
     </section>
-    <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      {['Yu-Gi-Oh!', 'Magic: The Gathering', 'Pokémon TCG', 'One Piece Card Game'].map((game, index) => <div key={game} className="rounded-2xl border border-white/10 bg-white/[.035] p-5"><p className="text-xs font-semibold uppercase tracking-widest text-vault-teal">0{index + 1} · Card archive</p><h2 className="mt-3 text-lg font-bold">{game}</h2></div>)}
-    </div>
+    <section aria-label="เลือกเกมการ์ด" className="mt-10 grid gap-4 sm:grid-cols-2 lg:mt-12 lg:grid-cols-4">
+      {games.map((game, index) => <Link key={game.id} to={`/cards?game=${game.id}`} className={`group relative isolate flex min-h-64 flex-col justify-between overflow-hidden rounded-2xl border ${game.edge} bg-gradient-to-br ${game.color} p-5 shadow-xl shadow-black/15 focus:outline-none focus:ring-2 focus:ring-vault-gold sm:min-h-72`}>
+        <div aria-hidden="true" className="absolute -right-8 -top-7 -z-10 h-40 w-32 rotate-[18deg] rounded-2xl border border-white/15 bg-white/[.06] shadow-2xl shadow-black/30 transition-transform group-hover:rotate-[12deg]"/>
+        <div aria-hidden="true" className="absolute -right-1 top-5 -z-10 h-40 w-32 rotate-[8deg] rounded-2xl border border-white/20 bg-black/10"/>
+        <div className="flex items-center justify-between"><span className="rounded-full border border-white/20 bg-black/20 px-3 py-1 text-[10px] font-bold tracking-[.16em] text-white/80">0{index + 1} · CARD DATABASE</span><span aria-hidden="true" className="text-xl text-white/60">↗</span></div>
+        <div className="mt-12"><p className="mb-2 text-xs font-black tracking-[.22em] text-white/65">{game.mark}</p><h2 className="text-xl font-black leading-snug text-white">{game.name}</h2><p className="mt-2 text-sm text-white/70">{game.detail}</p></div>
+        <span className="mt-5 inline-flex w-fit items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-bold text-vault-background">เปิดคลังการ์ด <span aria-hidden="true">→</span></span>
+      </Link>)}
+    </section>
   </main>;
 }
 

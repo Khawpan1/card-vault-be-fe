@@ -8,7 +8,7 @@ const games = [
 ];
 
 export default function CatalogPage() {
-  const [filters, setFilters] = useState({ game: '', q: '', type: '', rarity: '' });
+  const [filters, setFilters] = useState({ game: new URLSearchParams(window.location.search).get('game') || '', q: '', type: '', rarity: '' });
   const [cards, setCards] = useState([]);
   const [total, setTotal] = useState(0);
   const [status, setStatus] = useState('loading');
