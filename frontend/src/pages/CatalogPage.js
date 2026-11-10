@@ -34,13 +34,13 @@ export default function CatalogPage() {
   useEffect(() => { loadCards(); /* filters and page trigger a new local API request */ }, [filters.game, filters.q, filters.type, filters.rarity, offset]);
   function update(field, value) { setOffset(0); setFilters((current) => ({ ...current, [field]: value })); }
 
-  return <main className="mx-auto max-w-7xl px-4 py-8">
-    <div className="mb-7"><p className="text-xs font-bold uppercase tracking-widest text-vault-teal">Explore the archive</p><h1 className="mt-2 text-3xl font-black">คลังการ์ด</h1><p className="mt-2 text-sm text-vault-cream/60">ค้นหาและกรองข้อมูลที่จัดเก็บในฐานข้อมูลของเรา · {total} ใบ</p></div>
-    <section aria-label="ตัวกรองการ์ด" className="mb-7 grid gap-3 rounded-xl border border-white/10 bg-white/[.04] p-4 sm:grid-cols-2 lg:grid-cols-4">
-      <input aria-label="ค้นหาชื่อการ์ด" value={filters.q} onChange={(e) => update('q', e.target.value)} placeholder="ค้นหาชื่อการ์ด…" className="rounded-lg border border-white/10 bg-black/20 px-3 py-2"/>
-      <select aria-label="เกม" value={filters.game} onChange={(e) => update('game', e.target.value)} className="rounded-lg border border-white/10 bg-vault-background px-3 py-2"><option value="">ทุกเกม</option>{games.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
-      <input aria-label="ประเภท" value={filters.type} onChange={(e) => update('type', e.target.value)} placeholder="ประเภทการ์ด" className="rounded-lg border border-white/10 bg-black/20 px-3 py-2"/>
-      <input aria-label="ความหายาก" value={filters.rarity} onChange={(e) => update('rarity', e.target.value)} placeholder="ความหายาก" className="rounded-lg border border-white/10 bg-black/20 px-3 py-2"/>
+  return <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+    <div className="mb-8"><p className="text-xs font-bold uppercase tracking-[.18em] text-vault-teal">Explore the archive</p><h1 className="mt-2 text-3xl font-black sm:text-4xl">คลังการ์ด</h1><p className="mt-2 text-sm text-vault-cream/60">ค้นหาและกรองข้อมูลที่จัดเก็บในฐานข้อมูลของเรา · {total.toLocaleString()} ใบ</p></div>
+    <section aria-label="ตัวกรองการ์ด" className="mb-8 grid gap-3 rounded-2xl border border-white/10 bg-white/[.035] p-4 sm:grid-cols-2 lg:grid-cols-4">
+      <input aria-label="ค้นหาชื่อการ์ด" value={filters.q} onChange={(e) => update('q', e.target.value)} placeholder="ค้นหาชื่อการ์ด…" className="min-w-0 rounded-xl border border-white/10 bg-black/20 px-4 py-3"/>
+      <select aria-label="เกม" value={filters.game} onChange={(e) => update('game', e.target.value)} className="min-w-0 rounded-xl border border-white/10 bg-vault-background px-4 py-3"><option value="">ทุกเกม</option>{games.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
+      <input aria-label="ประเภท" value={filters.type} onChange={(e) => update('type', e.target.value)} placeholder="ประเภทการ์ด" className="min-w-0 rounded-xl border border-white/10 bg-black/20 px-4 py-3"/>
+      <input aria-label="ความหายาก" value={filters.rarity} onChange={(e) => update('rarity', e.target.value)} placeholder="ความหายาก" className="min-w-0 rounded-xl border border-white/10 bg-black/20 px-4 py-3"/>
     </section>
     {status === 'loading' && <Loading/>}
     {status === 'error' && <ErrorMessage message={error} onRetry={loadCards}/>}

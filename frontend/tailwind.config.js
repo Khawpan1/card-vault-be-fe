@@ -3,6 +3,9 @@ module.exports = {
   content: ["./src/**/*.{js,jsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"Leelawadee UI"', '"Noto Sans Thai"', 'Tahoma', 'system-ui', 'sans-serif']
+      },
       colors: {
         vault: {
           background: "#1A1423",
