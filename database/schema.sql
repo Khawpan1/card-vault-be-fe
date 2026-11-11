@@ -18,8 +18,8 @@ CREATE UNIQUE INDEX uq_members_email_lower ON members (lower(email));
 CREATE TABLE cards (
     id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     game        VARCHAR(20) NOT NULL
-                CHECK (game IN ('yugioh', 'mtg', 'pokemon', 'onepiece')),
-    source_id   VARCHAR(100) NOT NULL,
+                CHECK (game IN ('vanguard')),
+    source_id   VARCHAR(150) NOT NULL,
     name        VARCHAR(255) NOT NULL,
     type        VARCHAR(255) NOT NULL,
     rarity      VARCHAR(100) NOT NULL,
@@ -42,7 +42,7 @@ CREATE TABLE decks (
     id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     member_id   BIGINT NOT NULL REFERENCES members (id) ON DELETE CASCADE,
     game        VARCHAR(20) NOT NULL
-                CHECK (game IN ('yugioh', 'mtg', 'pokemon', 'onepiece')),
+                CHECK (game IN ('vanguard')),
     name        VARCHAR(100) NOT NULL CHECK (char_length(btrim(name)) > 0),
     description VARCHAR(1000) NOT NULL DEFAULT '',
     is_public   BOOLEAN NOT NULL DEFAULT FALSE,

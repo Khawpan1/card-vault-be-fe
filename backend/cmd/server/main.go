@@ -25,13 +25,13 @@ func main() {
 	}
 	defer db.Close()
 
-	api := handler.New(db, []byte(secret), os.Getenv("FRONTEND_ORIGIN"))
+	api := handler.New(db, []byte(secret), os.Getenv("FRONTEND_ORIGIN"), os.Getenv("POKEWALLET_API_KEY"))
 	server := &http.Server{
 		Addr:              ":" + port,
 		Handler:           api.Routes(),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
-	log.Printf("Card Vault API listening on :%s", port)
+	log.Printf("Vanguard Vault API listening on :%s", port)
 	log.Fatal(server.ListenAndServe())
 }
 

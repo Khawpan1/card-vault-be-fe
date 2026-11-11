@@ -12,10 +12,10 @@ function renderCatalog() {
 afterEach(() => jest.clearAllMocks());
 
 test('แสดง Loading แล้วแสดงการ์ดที่ API ส่งกลับ', async () => {
-  request.mockResolvedValue({ items: [{ id: 9, name: 'Blue-Eyes White Dragon', game: 'yugioh', type: 'Dragon', rarity: 'Ultra Rare', imageUrl: 'https://cards.example/blue-eyes.jpg' }], total: 1 });
+  request.mockResolvedValue({ items: [{ id: 9, name: 'Hellfire Dragon Emperor', game: 'vanguard', type: 'Normal Unit', rarity: 'RRR', imageUrl: '' }], total: 1 });
   renderCatalog();
   expect(screen.getByRole('status')).toHaveTextContent('กำลังโหลด');
-  expect(await screen.findByText('Blue-Eyes White Dragon')).toBeInTheDocument();
+  expect(await screen.findByText('Hellfire Dragon Emperor')).toBeInTheDocument();
   expect(screen.getByText(/1 ใบ/)).toBeInTheDocument();
 });
 

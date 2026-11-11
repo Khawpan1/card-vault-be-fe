@@ -8,6 +8,7 @@
 frontend/node_modules/
 frontend/build/
 frontend/.cache/
+database/.make-seed-progress/
 
 # Go generated executables
 backend/app

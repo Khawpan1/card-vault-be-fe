@@ -9,11 +9,11 @@ import (
 
 func (a *API) listCollection(w http.ResponseWriter, r *http.Request) {
 	game := r.URL.Query().Get("game")
-	if game != "" && game != "yugioh" && game != "mtg" && game != "pokemon" && game != "onepiece" {
+	if game != "" && game != "vanguard" {
 		WriteError(w, http.StatusBadRequest, "invalid_game", "เกมไม่ถูกต้อง")
 		return
 	}
-	items, err := a.db.ListCollection(r.Context(), mw.Current(r).MemberID, game)
+	items, err := a.db.ListCollection(r.Context(), mw.Current(r).MemberID, "vanguard")
 	if err != nil {
 		WriteError(w, http.StatusInternalServerError, "server_error", "อ่านคอลเลกชันไม่สำเร็จ")
 		return

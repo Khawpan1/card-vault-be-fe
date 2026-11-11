@@ -1,4 +1,4 @@
-# API Contract: Card Archive and Deck Builder
+# API Contract: Vanguard Vault
 
 Base path: `/api`. JSON field names use camelCase. Errors use
 `{"error":{"code":"...","message":"..."}}` with an appropriate HTTP status.
@@ -10,36 +10,38 @@ them as trusted values from a request body, query string, or path parameter.
 
 | Method and path | Purpose |
 | --- | --- |
-| `GET /cards?game=&q=&type=&rarity=&limit=&offset=` | Search and filter the local card catalog. |
-| `GET /cards/{cardId}` | Get local card details. |
-| `GET /decks?game=&q=` | List public decks. |
-| `GET /decks/{deckId}` | Read a public deck; private decks are visible only to their owner. |
-| `GET /decks/{deckId}/reviews` | Read reviews for a public deck. |
+| `GET /cards?game=vanguard&q=&type=&rarity=&limit=&offset=` | Search the local Vanguard catalog. |
+| `GET /cards/{cardId}` | Read Vanguard card details from PostgreSQL. |
+| `GET /cards/{cardId}/image` | Stream a PokéWallet image through Go; key remains server-side and responses are cached for 24 hours. |
+| `GET /decks?game=vanguard&q=` | List public Vanguard decks. |
+| `GET /decks/{deckId}` | Read a public Vanguard deck; private decks are visible only to their owner. |
+| `GET /decks/{deckId}/reviews` | Read reviews for a public Vanguard deck. |
 
-List responses use `{items, total, limit, offset}`. The API reads the local PostgreSQL
-database only; it does not call card-provider APIs during normal page requests.
+List responses use `{items, total, limit, offset}`. Card metadata, search, filters,
+decks, and collections use PostgreSQL; normal catalog requests do not call the
+PokéWallet metadata/search API.
 
 ## Authentication and member
 
 | Method and path | Purpose |
 | --- | --- |
-| `POST /auth/register` | Create a member with role `member`; hash the password with bcrypt. |
-| `POST /auth/login` | Verify the password and return a signed JWT and safe member profile. |
+| `POST /auth/register` | Create a member with role `member`; hash password with bcrypt. |
+| `POST /auth/login` | Verify password and return a signed JWT and safe profile. |
 | `GET /me` | Read the signed-in member profile. |
-| `PATCH /me` | Change the member's display name. |
-| `PUT /me/password` | Verify the current password and set a new bcrypt hash. |
-| `GET /me/decks` | List the signed-in member's decks. |
-| `POST /decks` | Create a deck for the signed-in member. |
+| `PATCH /me` | Change display name. |
+| `PUT /me/password` | Verify current password and set a new bcrypt hash. |
+| `GET /me/decks` | List the signed-in member's Vanguard decks. |
+| `POST /decks` | Create a Vanguard deck for the signed-in member. |
 | `PUT /decks/{deckId}` | Edit an owned deck's name, description, or public state. |
-| `DELETE /decks/{deckId}` | Delete an owned deck. |
-| `PUT /decks/{deckId}/cards` | Replace a deck's card list with `[{cardId, quantity}]`; all cards must match the deck game. |
-| `GET /me/collection?game=` | List the signed-in member's collected cards. |
-| `PUT /me/collection/{cardId}` | Set the owned quantity for one card. |
+| `DELETE /decks/{deckId}` | Delete an owned Vanguard deck. |
+| `PUT /decks/{deckId}/cards` | Replace a deck's card list with `[{cardId, quantity}]`; all cards must be Vanguard. |
+| `GET /me/collection?game=vanguard` | List the signed-in member's Vanguard collection. |
+| `PUT /me/collection/{cardId}` | Set owned quantity for one Vanguard card. |
 | `DELETE /me/collection/{cardId}` | Remove a card from the signed-in member's collection. |
-| `POST /decks/{deckId}/reviews` | Create or update the signed-in member's review of a deck. |
+| `POST /decks/{deckId}/reviews` | Create or update the signed-in member's review of a public Vanguard deck. |
 
-With stateless JWT, logout clears the token in the frontend. It does not require a
-server endpoint. Protected requests send `Authorization: Bearer <token>`.
+Logout clears the token in the frontend. Protected requests send
+`Authorization: Bearer <token>`.
 
 ## Admin
 
@@ -47,31 +49,27 @@ All `/admin/*` routes require a verified JWT whose role is `admin`.
 
 | Method and path | Purpose |
 | --- | --- |
-| `POST /admin/cards` | Add a card to the local catalog. |
-| `PUT /admin/cards/{cardId}` | Edit a card. |
-| `DELETE /admin/cards/{cardId}` | Delete a card that is not in a deck or collection. |
+| `POST /admin/cards` | Add a Vanguard card. |
+| `PUT /admin/cards/{cardId}` | Edit a Vanguard card. |
+| `DELETE /admin/cards/{cardId}` | Delete a Vanguard card not used by a deck or collection. |
 | `GET /admin/members` | List member profiles without password hashes. |
-| `PATCH /admin/members/{memberId}/role` | Set `member` or `admin`; the actor ID comes from the JWT. |
-| `DELETE /admin/members/{memberId}` | Delete a member; dependent decks, reviews, and collection rows cascade. |
-| `GET /admin/decks` | List decks for moderation. |
+| `PATCH /admin/members/{memberId}/role` | Set `member` or `admin`; actor ID comes from JWT. |
+| `DELETE /admin/members/{memberId}` | Delete a member and dependent records. |
+| `GET /admin/decks` | List Vanguard decks for moderation. |
 | `DELETE /admin/decks/{deckId}` | Remove an inappropriate deck. |
-| `GET /admin/reviews` | List reviews for moderation. |
+| `GET /admin/reviews` | List Vanguard reviews for moderation. |
 | `DELETE /admin/reviews/{reviewId}` | Remove an inappropriate review. |
 
-## Card source mapping used by the one-time seed
+## PokéWallet source fields used by the one-time seed
 
-- Yu-Gi-Oh!: YGOPRODeck v7 `cardinfo.php`; source fields include `id`, `name`,
-  `type`, `desc`, `card_sets[].set_rarity`, and `card_images[].image_url`.
-- Magic: Scryfall `/cards/search`; source fields include `id`, `name`, `type_line`,
-  `rarity`, `oracle_text`, and `image_uris` (or the first face's image URI).
-- Pokémon: TCGdex Thai `/v2/th/cards` for localized card briefs, then `/v2/th/cards/{id}`
-  for details; source fields include `name`, `category`, `types`, `stage`, `rarity`,
-  `attacks`, `abilities`, `effect`/`description`, `image`, and `set`.
-- One Piece: OPTCG API `/api/allSetCards/`; source fields include `card_set_id`,
-  `set_id`, `card_name`, `card_type`, `rarity`, `card_text`, and `card_image`.
-
-The one-time seed currently targets 500 complete cards each for Yu-Gi-Oh!, MTG,
-and Thai Pokémon, plus all 3,557 complete One Piece records returned by the source.
-These counts describe the generated seed file; repeated upserts may update existing IDs.
-
-The seed stores source identifiers and image URLs. It does not download image files.
+- `/cfv/sets`: `name`, `set_code`, `set_id`, `card_count`, `language`, `release_date`.
+- `/cfv/sets/{set_id}?page=1&limit=200`: `id`, `card_info.name`,
+  `card_info.card_type`, `card_info.unit`, `card_info.nation`, `card_info.clan`,
+  `card_info.rarity`, `card_info.card_text`, `card_info.set_name`,
+  `card_info.set_code`, `card_info.product_type`, and `images.languages`.
+- Seed paginates every set (limit 200), includes every `product_type: "card"`
+  record with an ID and name, and excludes sealed or unclassified products.
+  Missing type/rarity values are marked `ไม่ระบุ`; the checkpoint lets a rerun
+  resume after the API free-tier rate limit.
+- Image IDs are used at `/cfv/images/{id}` by Go with the API key. SQL stores the
+  source image URL; it does not contain downloaded image files.

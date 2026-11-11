@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"card-vault/backend/mw"
 	"card-vault/backend/store"
@@ -18,13 +20,26 @@ type API struct {
 	db             store.Repository
 	secret         []byte
 	frontendOrigin string
+	pokewalletKey  string
+	imageCacheMu   sync.Mutex
+	imageCache     map[string]cachedImage
 }
 
-func New(db store.Repository, secret []byte, frontendOrigin string) *API {
+type cachedImage struct {
+	body        []byte
+	contentType string
+	expiresAt   time.Time
+}
+
+func New(db store.Repository, secret []byte, frontendOrigin string, apiKey ...string) *API {
 	if frontendOrigin == "" {
 		frontendOrigin = "http://localhost:3000"
 	}
-	return &API{db: db, secret: secret, frontendOrigin: frontendOrigin}
+	key := ""
+	if len(apiKey) > 0 {
+		key = apiKey[0]
+	}
+	return &API{db: db, secret: secret, frontendOrigin: frontendOrigin, pokewalletKey: key, imageCache: make(map[string]cachedImage)}
 }
 
 func (a *API) Routes() http.Handler {
@@ -36,6 +51,7 @@ func (a *API) Routes() http.Handler {
 		WriteError(w, http.StatusNotFound, "not_found", "ไม่พบ API นี้")
 	})
 	mux.HandleFunc("GET /api/cards", a.listCards)
+	mux.HandleFunc("GET /api/cards/{cardId}/image", a.cardImage)
 	mux.HandleFunc("GET /api/cards/{cardId}", a.getCard)
 	mux.HandleFunc("GET /api/decks", a.listPublicDecks)
 	mux.HandleFunc("GET /api/decks/{deckId}", a.getDeck)

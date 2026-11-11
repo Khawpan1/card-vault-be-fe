@@ -24,11 +24,11 @@ type Card struct {
 // SearchCards อ่านคลังใน PostgreSQL และคืนจำนวนทั้งหมดเพื่อทำ pagination
 func (s *Store) SearchCards(ctx context.Context, game, query, cardType, rarity string, limit, offset int) ([]Card, int, error) {
 	var total int
-	err := s.Pool.QueryRow(ctx, `SELECT count(*) FROM cards WHERE ($1='' OR game=$1) AND ($2='' OR name ILIKE '%'||$2||'%') AND ($3='' OR type ILIKE '%'||$3||'%') AND ($4='' OR rarity ILIKE '%'||$4||'%')`, game, query, cardType, rarity).Scan(&total)
+	err := s.Pool.QueryRow(ctx, `SELECT count(*) FROM cards WHERE game='vanguard' AND ($1='' OR name ILIKE '%'||$1||'%') AND ($2='' OR type ILIKE '%'||$2||'%') AND ($3='' OR rarity ILIKE '%'||$3||'%')`, query, cardType, rarity).Scan(&total)
 	if err != nil {
 		return nil, 0, err
 	}
-	rows, err := s.Pool.Query(ctx, `SELECT id,game,source_id,name,type,rarity,rules_text,image_url,set_name,set_code,source_url FROM cards WHERE ($1='' OR game=$1) AND ($2='' OR name ILIKE '%'||$2||'%') AND ($3='' OR type ILIKE '%'||$3||'%') AND ($4='' OR rarity ILIKE '%'||$4||'%') ORDER BY lower(name),id LIMIT $5 OFFSET $6`, game, query, cardType, rarity, limit, offset)
+	rows, err := s.Pool.Query(ctx, `SELECT id,game,source_id,name,type,rarity,rules_text,image_url,set_name,set_code,source_url FROM cards WHERE game='vanguard' AND ($1='' OR name ILIKE '%'||$1||'%') AND ($2='' OR type ILIKE '%'||$2||'%') AND ($3='' OR rarity ILIKE '%'||$3||'%') ORDER BY lower(name),id LIMIT $4 OFFSET $5`, query, cardType, rarity, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -46,7 +46,7 @@ func (s *Store) SearchCards(ctx context.Context, game, query, cardType, rarity s
 
 func (s *Store) CardByID(ctx context.Context, id int64) (Card, error) {
 	var item Card
-	err := s.Pool.QueryRow(ctx, `SELECT id,game,source_id,name,type,rarity,rules_text,image_url,set_name,set_code,source_url FROM cards WHERE id=$1`, id).Scan(&item.ID, &item.Game, &item.SourceID, &item.Name, &item.Type, &item.Rarity, &item.RulesText, &item.ImageURL, &item.SetName, &item.SetCode, &item.SourceURL)
+	err := s.Pool.QueryRow(ctx, `SELECT id,game,source_id,name,type,rarity,rules_text,image_url,set_name,set_code,source_url FROM cards WHERE id=$1 AND game='vanguard'`, id).Scan(&item.ID, &item.Game, &item.SourceID, &item.Name, &item.Type, &item.Rarity, &item.RulesText, &item.ImageURL, &item.SetName, &item.SetCode, &item.SourceURL)
 	return item, err
 }
 
@@ -56,12 +56,12 @@ func (s *Store) CreateCard(ctx context.Context, item Card) (Card, error) {
 }
 
 func (s *Store) UpdateCard(ctx context.Context, id int64, item Card) (Card, error) {
-	err := s.Pool.QueryRow(ctx, `UPDATE cards SET game=$2,source_id=$3,name=$4,type=$5,rarity=$6,rules_text=$7,image_url=$8,set_name=$9,set_code=$10,source_url=$11,updated_at=now() WHERE id=$1 RETURNING id`, id, item.Game, item.SourceID, item.Name, item.Type, item.Rarity, item.RulesText, item.ImageURL, item.SetName, item.SetCode, item.SourceURL).Scan(&item.ID)
+	err := s.Pool.QueryRow(ctx, `UPDATE cards SET game=$2,source_id=$3,name=$4,type=$5,rarity=$6,rules_text=$7,image_url=$8,set_name=$9,set_code=$10,source_url=$11,updated_at=now() WHERE id=$1 AND game='vanguard' RETURNING id`, id, item.Game, item.SourceID, item.Name, item.Type, item.Rarity, item.RulesText, item.ImageURL, item.SetName, item.SetCode, item.SourceURL).Scan(&item.ID)
 	return item, err
 }
 
 func (s *Store) DeleteCard(ctx context.Context, id int64) (int64, error) {
-	result, err := s.Pool.Exec(ctx, `DELETE FROM cards WHERE id=$1`, id)
+	result, err := s.Pool.Exec(ctx, `DELETE FROM cards WHERE id=$1 AND game='vanguard'`, id)
 	return result.RowsAffected(), err
 }
 

@@ -1,38 +1,49 @@
-# Card Vault
+# Vanguard Vault
 
-เว็บคลังการ์ดและจัดเด็คสำหรับ Yu-Gi-Oh!, Magic: The Gathering, Pokémon TCG และ One Piece Card Game
+เว็บคลังการ์ดและจัดเด็คสำหรับ **Cardfight!! Vanguard** เกมเดียว สมาชิกค้นหาการ์ดจากรูป สร้างและแก้ไขเด็ค เก็บคอลเลกชัน และเผยแพร่เด็คสาธารณะได้
 
-## โครงสร้างโปรเจกต์
+## โครงสร้าง
 
-- `frontend/` React, Tailwind CSS, React Router, Fetch API และ React Unit Test
+- `frontend/` React, Tailwind CSS, React Router และ Fetch API
 - `backend/` Go API แบ่ง `cmd/server/`, `handler/`, `store/`, `mw/` และ `auth/`
-- `database/` PostgreSQL schema, API contract และสคริปต์ seed แบบรันครั้งเดียว
+- `database/` PostgreSQL schema, migrations, API contract และ seed script
 
-เส้นทางข้อมูลหลักคือหน้า React → Fetch API → Go middleware/handler → `store.Repository`
-→ PostgreSQL (`pgxpool`). API ปกติไม่เรียกผู้ให้บริการข้อมูลการ์ดภายนอก
+ข้อมูลการ์ดทำงานตามเส้นทาง React → Fetch → Go → PostgreSQL; API ค้นหาและกรองข้อมูลจากฐานข้อมูลของเรา ไม่เรียก PokéWallet เพื่อค้นหาการ์ดทุกครั้งที่เปิดหน้า
+
+## แหล่งข้อมูลและรูป
+
+ใช้ [PokéWallet Cardfight!! Vanguard API](https://pokewallet.io/api-docs/cardfight-vanguard) ตามฟิลด์ในเอกสารจริง: `/cfv/sets` คืน `name`, `set_code`, `set_id`, `card_count`, `language`, `release_date`; รายการการ์ดในชุดคืน `id`, `card_info`, `images.languages` และ `product_type`.
+
+PokéWallet กำหนด API key สำหรับชุด การ์ด และรูป และห้ามเผย key ในโค้ดฝั่งหน้าเว็บหรือ repository. รูปโหลดผ่าน Go backend เพื่อแนบ key แบบ server-side; backend และ browser cache รูป 24 ชั่วโมงตามข้อมูล API. การค้นหาและกรองการ์ดยังคงอ่าน PostgreSQL.
+
+สคริปต์ seed อ่านทุกชุดที่ API ระบุ (เอกสารปัจจุบันแสดง 421 ชุด) และไล่หน้ารายการสูงสุด 200 ใบต่อคำขอ. นำเข้าการ์ดทุกใบที่ API ระบุเป็น `product_type: "card"` และมี ID/ชื่อ; ไม่รวมสินค้ากล่องหรือรายการที่จำแนกชนิดไม่ได้. หากไม่มีชนิดหรือความหายากให้บันทึกเป็น `ไม่ระบุ`. API แผนฟรีจำกัด 100 คำขอต่อชั่วโมงและ 1,000 คำขอต่อวัน สคริปต์เว้นช่วงคำขอและบันทึก checkpoint ที่ `database/.make-seed-progress/`; หากชน rate limit ให้รันซ้ำหลังเวลาที่แจ้งเพื่อทำต่อ. อย่าลบโฟลเดอร์ checkpoint ระหว่าง seed.
 
 ## รันในเครื่อง (PowerShell)
 
-1. สร้างฐานข้อมูล PostgreSQL แล้วรัน `database/schema.sql` ผ่าน PostgreSQL client หรือ SQL Editor ของ Supabase
-2. ดึงข้อมูลการ์ดและสร้าง SQL สำหรับ seed:
+1. สร้างฐานข้อมูล PostgreSQL และรัน `database/schema.sql` สำหรับฐานข้อมูลใหม่
+2. ตั้ง API key ใน session PowerShell โดยไม่ใส่ key ลงไฟล์ที่ commit:
 
    ```powershell
+   $secureKey = Read-Host "PokéWallet API key" -AsSecureString
+   $env:POKEWALLET_API_KEY = [System.Net.NetworkCredential]::new("", $secureKey).Password
    node database/make-seed.mjs
+   Remove-Item Env:POKEWALLET_API_KEY
    ```
 
-   สคริปต์เรียก API ต้นทางครั้งเดียวและสร้าง `database/seed.sql`; หลัง schema ให้รันไฟล์นี้กับฐานข้อมูลเดียวกัน (ใช้ซ้ำได้เพราะ upsert ตามรหัสต้นทาง)
-   Seed ปัจจุบันมี Yu-Gi-Oh! 500 ใบ, MTG 500 ใบ, Pokémon ภาษาไทย 500 ใบ และ One Piece ที่มีข้อมูลหลักครบ 3,557 ใบ
-   Pokémon ใช้ TCGdex ภาษาไทย; เกมอื่นใช้ภาษาที่ API มีให้ สคริปต์ seed เรียก API ภายนอกเฉพาะตอนสร้างข้อมูลครั้งเดียว
-3. ตั้งค่า Backend ใน Terminal:
+   รอจนสคริปต์แจ้งว่าสร้าง `database/seed.sql` สำเร็จครบทุกชุด แล้วจึงรัน SQL นั้นกับ PostgreSQL/Supabase
+3. ตั้งค่าและรัน Backend:
 
    ```powershell
    $env:DATABASE_URL = "postgres://postgres:password@localhost:5432/cardvault?sslmode=disable"
    $env:JWT_SECRET = "ใส่-secret-สุ่มที่ยาวอย่างน้อย-32-ตัวอักษร"
    $env:FRONTEND_ORIGIN = "http://localhost:3000"
+   $secureKey = Read-Host "PokéWallet API key" -AsSecureString
+   $env:POKEWALLET_API_KEY = [System.Net.NetworkCredential]::new("", $secureKey).Password
    cd backend
    go run ./cmd/server
    ```
-4. ตั้งค่า Frontend ในอีก Terminal:
+
+4. เปิดอีก Terminal เพื่อรัน Frontend:
 
    ```powershell
    cd frontend
@@ -40,77 +51,40 @@
    npm install
    npm start
    ```
-5. ลงทะเบียนผู้ใช้ตามปกติ หากต้องการผู้ดูแลระบบ ให้ปรับ role ของบัญชีในฐานข้อมูลโดยผู้ดูแล PostgreSQL:
+
+5. สมัครสมาชิกตามปกติ หากต้องการบัญชี Admin ให้ผู้ดูแล PostgreSQL ปรับ role:
 
    ```sql
    UPDATE members SET role = 'admin' WHERE lower(email) = lower('อีเมลผู้ดูแล');
    ```
 
-   จากนั้นออกจากระบบและเข้าสู่ระบบใหม่ เพื่อรับ JWT ที่มี role ล่าสุด (ตั๋วหมดอายุใน 30 นาที)
+   จากนั้นออกจากระบบและเข้าสู่ระบบใหม่เพื่อรับ token ที่มี role ล่าสุด
 
-## ทดสอบ
+## ฐานข้อมูลเดิมที่มีหลายเกม
 
-```powershell
-cd frontend
-npm test -- --watchAll=false --runInBand
-cd ..\backend
-go test ./...
-```
+อย่ารัน `schema.sql` ทับฐานข้อมูลเดิม. ใช้ Supabase SQL Editor รัน `database/migrations/003_vanguard_only.sql` หนึ่งครั้งหลังสำรองข้อมูลแล้ว. Migration เพิ่มข้อกำหนดให้ข้อมูลใหม่เป็น Vanguard, ขยาย `source_id` รองรับ ID ยาวของ PokéWallet และยังเก็บแถวการ์ด/เด็คเก่าไว้; หน้าเว็บ/API ปัจจุบันจะแสดงเฉพาะ Vanguard. หลัง seed สร้างครบแล้ว รัน `database/seed.sql` เพื่อเพิ่มการ์ด Vanguard ทั้งชุดข้อมูลที่ API ส่งให้.
 
 ## Environment variables
 
-ใช้ `backend/.env.example` และ `frontend/.env.example` เป็นรายการค่าที่ต้องกำหนด
-Go อ่าน environment variables จากระบบหรือแพลตฟอร์ม deploy โดยตรง
-อย่า commit `.env`, database URL หรือ JWT secret
+ดูชื่อค่าที่ต้องตั้งใน `backend/.env.example` และ `frontend/.env.example`. ค่าลับที่ต้องมีคือ `DATABASE_URL`, `JWT_SECRET` (อย่างน้อย 32 ตัวอักษร) และ `POKEWALLET_API_KEY`; อย่า commit หรือส่งค่าจริงลงแชต.
 
-## Deploy ตามข้อกำหนดวิชา
+## Deploy
 
-- Frontend: เชื่อม GitHub repository กับ Vercel โดยตั้ง Root Directory เป็น `frontend`; กำหนด `REACT_APP_API_URL` เป็น URL ของ Backend ต่อท้าย `/api`.
-- Backend: เชื่อม repository กับ Render โดยตั้ง Root Directory เป็น `backend`, Build Command `go build -o app ./cmd/server`, Start Command `./app`; กำหนด `DATABASE_URL`, `JWT_SECRET`, `FRONTEND_ORIGIN` ใน Environment.
-- Database: ใช้ PostgreSQL บน Supabase, รัน `database/schema.sql` แล้วนำ `database/seed.sql` เข้า DB.
+- Frontend: Vercel, Root Directory `frontend`; ตั้ง `REACT_APP_API_URL` เป็น URL backend ต่อท้าย `/api`.
+- Backend: Render, Root Directory `backend`; Build Command `go build -o app ./cmd/server`; Start Command `./app`; ตั้ง `DATABASE_URL`, `JWT_SECRET`, `FRONTEND_ORIGIN` และ `POKEWALLET_API_KEY` ใน Environment.
+- Database: Supabase PostgreSQL; รัน migration สำหรับฐานเดิมและนำ seed SQL ที่สร้างแล้วเข้า database.
 
-## ที่มาข้อมูลการ์ด
+## ขอบเขตและเครดิต
 
-รายละเอียดและ URL รูปจาก [YGOPRODeck](https://ygoprodeck.com/), [Scryfall](https://scryfall.com/), [TCGdex ภาษาไทย](https://tcgdex.dev/) และ [OPTCG API](https://www.optcgapi.com/documentation). เว็บแสดงเครดิตแหล่งข้อมูลและเก็บเฉพาะ URL รูปตามข้อกำหนดโครงงาน
-
-หมายเหตุ: TCGdex มีชุดข้อมูลภาษาไทย; YGOPRODeck, Scryfall และ OPTCG API ใช้ข้อมูลภาษาอังกฤษใน seed นี้ เพราะไม่มีชุดภาษาไทยที่ API เหล่านั้นเปิดให้ใช้ได้ตรงกัน เว็บไม่เรียก API ภายนอกระหว่างใช้งานปกติ
+ขอบเขตเว็บมีคลังการ์ด ค้นหา/กรอง รายละเอียดการ์ด เด็คสาธารณะ ระบบสมาชิก เด็ค คอลเลกชัน และหน้า Admin. ไม่รวมฟีเจอร์คอมโบ ร้านค้า ราคา ทัวร์นาเมนต์ แชต หรือการชำระเงิน. เครดิตข้อมูลและรูป: [PokéWallet Cardfight!! Vanguard API](https://pokewallet.io/api-docs/cardfight-vanguard).
 
 ## Checklist เกณฑ์ประเมิน
 
-- [x] React, Tailwind CSS, React Router, Fetch API, Go และ PostgreSQL
-- [x] Guest / Member / Admin มีหน้าและ API ตามขอบเขต; API ตรวจ JWT และ role
-- [x] Register, login, logout, profile และเปลี่ยนรหัสผ่าน (bcrypt)
-- [x] ค้น/กรองการ์ด, ดูรายละเอียด, ดูเด็คสาธารณะ และสถานะ Loading / Empty / Error
-- [x] สมาชิกสร้าง/แก้/ลบเด็ค, จัดการจำนวนการ์ด, เก็บคอลเลกชัน และแก้โปรไฟล์
-- [x] ผู้ดูแลจัดการการ์ด/สมาชิก และกลั่นกรองเด็ค/รีวิว
-- [x] Schema PostgreSQL และ seed: 500 ใบต่อเกมหลัก พร้อม One Piece 3,557 ใบ
-- [x] Supabase มี schema, migration เพิ่ม One Piece และ seed ชุดขยายแล้ว
-- [x] React Unit Test ผ่าน 4 tests ใน 2 suites: Loading/ข้อมูล, Empty, Error/retry และสร้างเด็ค/เพิ่มการ์ด
-- [x] แยก `frontend/`, `backend/`, `database/` ชัดเจน
-- [x] Backend บน Render เชื่อม PostgreSQL บน Supabase; ตรวจหน้า API ผ่านข้อมูลการ์ดจริง 5,136 ใบ
-- [x] สร้าง private GitHub repository และ push branch `main`
-- [x] Deploy database บน Supabase และ seed ข้อมูลจริง
-- [x] Deploy Frontend บน Vercel และ Backend บน Render
-
-### สถานะ Deploy ที่ตรวจแล้ว
-
-- Frontend: [Card Vault บน Vercel](https://frontend-wheat-kappa-70.vercel.app/)
-- Backend: [Card Vault API บน Render](https://card-vault-be-fe.onrender.com/api/health)
-- Frontend ใช้ `REACT_APP_API_URL=https://card-vault-be-fe.onrender.com/api`
-- Render ตั้ง `FRONTEND_ORIGIN` เป็น origin ของ Vercel แล้ว และ deploy ล่าสุดสำเร็จ
-- ตรวจหน้า `/cards` จากเว็บจริงแล้ว: API ส่งการ์ด 5,136 ใบและแสดงรายการได้
-- Render แพ็กเกจ Free อาจพักเมื่อไม่มีผู้ใช้ ทำให้คำขอแรกหลังพักใช้เวลาตื่นระบบนาน
-
-การตรวจออนไลน์ครั้งนี้ครอบคลุมการเปิดเว็บ, การเรียก API จริงและการแสดงคลังการ์ด
-ยังควรให้ทีมลอง flow สมาชิกและ Admin ด้วยบัญชีของทีมก่อนสาธิต เพราะการทดสอบ CRUD
-บนข้อมูล production อาจสร้างหรือแก้ไขข้อมูลจริง
-
-### สถานะ Supabase
-
-- Project: `card-vault-be-fe` (region Southeast Asia / Singapore)
-- PostgreSQL project ref: `dogwxvewpvnzdbkyjtuy`
-- Source: [Khawpan1/card-vault-be-fe](https://github.com/Khawpan1/card-vault-be-fe) (private)
-- `schema.sql`, migration `database/migrations/001_add_onepiece.sql` และ `seed.sql` รันสำเร็จแล้ว; seed ชุดขยายเพิ่มข้อมูลการ์ด One Piece และเกมอื่นในฐานข้อมูล
-- ใช้ Go ต่อ PostgreSQL โดยตรง จึงปิด Data API ไว้; ไม่ต้องใช้ Supabase client หรือเปิด RLS สำหรับ browser
-- รหัสผ่านฐานข้อมูลและ JWT secret เก็บเป็น Environment Variables ใน Render เท่านั้น ไม่อยู่ใน repository
-- ห้ามคัดลอกหรือส่งค่าลับจากหน้า Environment Variables ลง README, GitHub หรือแชต
+- [x] โครงสร้าง Frontend React/Tailwind/Router และ Backend Go แยกชัด
+- [x] Guest / Member / Admin และตรวจสิทธิ์ฝั่ง Backend ผ่าน JWT
+- [x] Register, Login/Logout, Profile และเปลี่ยนรหัสผ่านด้วย bcrypt
+- [x] Fetch → Go → PostgreSQL สำหรับรายการการ์ดและเด็ค พร้อม Loading / Empty / Error
+- [x] สร้าง/แก้ไข/ลบเด็ค, เลือกการ์ดด้วยรูป, คอลเลกชัน และเด็คสาธารณะ
+- [x] Seed script อ่าน API fields ตามเอกสาร PokéWallet; รูปผ่าน backend ที่เก็บ API key ไว้ฝั่ง server
+- [ ] ต้องตั้ง PokéWallet API key, สร้าง seed SQL ครบทุกชุด และรัน migration/seed ใน Supabase ก่อนให้ข้อมูล Vanguard แสดงบนระบบจริง
+- [ ] Build/deploy หลังเปลี่ยนเป็น Vanguard และทบทวนหน้าเว็บกับบัญชีจริง

@@ -16,7 +16,7 @@ function Header() {
   return (
     <header className="sticky top-0 z-20 border-b border-white/10 bg-zinc-950 text-white shadow-lg">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-        <Link className="flex items-center gap-2 text-lg font-black tracking-wide text-white sm:text-xl" to="/"><span className="grid h-9 w-9 place-items-center rounded-xl bg-vault-orange text-sm text-white">CV</span><span>CARD VAULT</span></Link>
+        <Link className="flex items-center gap-2 text-lg font-black tracking-wide text-white sm:text-xl" to="/"><span className="grid h-9 w-9 place-items-center rounded-xl bg-vault-orange text-sm text-white">VG</span><span>VANGUARD VAULT</span></Link>
         <nav className="flex flex-wrap items-center gap-1 text-sm" aria-label="เมนูหลัก">
           <NavLink to="/cards" className={navClass}>คลังการ์ด</NavLink>
           <NavLink to="/decks" className={navClass}>เด็คสาธารณะ</NavLink>
@@ -33,32 +33,16 @@ function Header() {
   );
 }
 
-const homeGames = [
-  { id: 'yugioh', name: 'Yu-Gi-Oh!', mark: 'DUEL', detail: 'ค้นหาการ์ดและสร้างเด็ค', color: 'from-[#8c3f20] to-[#331c2e]', edge: 'border-vault-orange/40', imageUrl: 'https://www.konami.com/yugioh/assets/images/mainvisual/yugikaiba-pc.webp', sourceUrl: 'https://www.konami.com/yugioh/' },
-  { id: 'mtg', name: 'Magic: The Gathering', mark: 'MTG', detail: 'สำรวจการ์ดจากหลายสี', color: 'from-[#365d58] to-[#1b2535]', edge: 'border-vault-teal/40', imageUrl: 'https://images.ctfassets.net/s5n2t79q9icq/7MfIs9WdOlc9pELBQPdNLK/deb72afc72a1a3fff458c95b26e957fa/jace-main.jpg', sourceUrl: 'https://magic.wizards.com/en/products/reality-fracture' },
-  { id: 'pokemon', name: 'Pokémon TCG', mark: 'POKÉMON', detail: 'ค้นหาการ์ดโปเกมอน', color: 'from-[#9a7425] to-[#3d2832]', edge: 'border-vault-gold/50', imageUrl: 'https://d1i787aglh9bmb.cloudfront.net/assets/img/home/featured-switcher/me06/booster-art-1-large-up-2x.jpg', sourceUrl: 'https://tcg.pokemon.com/en-us/' },
-  { id: 'onepiece', name: 'One Piece Card Game', mark: 'ONE PIECE', detail: 'รวมพลการ์ดโจรสลัด', color: 'from-[#315476] to-[#292044]', edge: 'border-sky-300/40', imageUrl: 'https://en.onepiece-cardgame.com/onepiececg/bccard/en/banner/2026/07/15/XYfefkzZmrEkoKvM/st36_mv.webp', sourceUrl: 'https://en.onepiece-cardgame.com/' }
-];
-
 function HomePage() {
-  const games = homeGames;
   return <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
-    <section className="mx-auto max-w-3xl text-center">
-      <span className="inline-flex items-center gap-2 rounded-full border border-vault-gold/30 bg-vault-gold/[.08] px-4 py-2 text-xs font-bold tracking-wide text-vault-gold"><span aria-hidden="true">✦</span> CARD VAULT · คลังการ์ด</span>
-      <h1 className="mt-6 text-4xl font-black leading-tight sm:text-5xl">เลือกเกมที่คุณชอบ</h1>
-      <p className="mx-auto mt-4 max-w-2xl leading-7 text-vault-cream/65">ค้นหาการ์ด ดูรายละเอียด และจัดเด็คจากคลังเดียว</p>
+    <section className="relative isolate overflow-hidden rounded-3xl border border-vault-orange/30 bg-zinc-950 px-6 py-14 text-white shadow-2xl sm:px-12 sm:py-20">
+      <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_75%_35%,rgba(243,107,33,.28),transparent_42%),linear-gradient(125deg,transparent_45%,rgba(37,138,136,.16)_45%,transparent_75%)]"/>
+      <p className="text-xs font-bold uppercase tracking-[.25em] text-vault-gold">Cardfight!! Vanguard · Card Archive</p>
+      <h1 className="mt-5 max-w-3xl text-4xl font-black leading-tight sm:text-6xl">เปิดคลังการ์ด<br/><span className="text-vault-orange">แล้วจัดเด็คของคุณ</span></h1>
+      <p className="mt-5 max-w-xl leading-7 text-white/70">ค้นหาการ์ด Vanguard ดูรายละเอียด และเลือกการ์ดจากภาพเพื่อสร้างเด็คของคุณ</p>
+      <div className="mt-8 flex flex-wrap gap-3"><Link to="/cards" className="rounded-xl bg-vault-orange px-5 py-3 font-bold text-white hover:bg-[#ff853f]">เปิดคลังการ์ด <span aria-hidden="true">→</span></Link><Link to="/decks" className="rounded-xl border border-white/25 px-5 py-3 font-bold text-white hover:bg-white/10">ดูเด็คสาธารณะ</Link></div>
+      <p className="mt-10 text-xs text-white/45">ข้อมูลการ์ดจาก <a href="https://pokewallet.io/api-docs/cardfight-vanguard" target="_blank" rel="noreferrer" className="underline">PokéWallet Vanguard API</a></p>
     </section>
-    <section aria-label="เลือกเกมการ์ด" className="mt-10 grid gap-4 sm:grid-cols-2 lg:mt-12 lg:grid-cols-4">
-      {games.map((game) => <Link key={game.id} to={`/cards?game=${game.id}`} className={`group relative isolate aspect-[4/5] overflow-hidden rounded-2xl border ${game.edge} bg-gradient-to-br ${game.color} shadow-xl shadow-black/20 focus:outline-none focus:ring-2 focus:ring-vault-gold`}>
-        <img src={game.imageUrl} alt={`ภาพโปรโมต ${game.name} จากเว็บไซต์ทางการ`} loading="lazy" className="absolute inset-0 -z-10 h-full w-full bg-black/20 object-cover transition-transform duration-300 group-hover:scale-105"/>
-        <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-t from-black/90 via-black/35 to-black/10"/>
-        <div className="absolute inset-x-5 bottom-5 flex items-end justify-between gap-3 sm:inset-x-6 sm:bottom-6">
-          <div className="min-w-0"><p className="text-[11px] font-semibold tracking-[.2em] text-white/80">CARD DATABASE</p><h2 className="mt-3 text-xl font-black leading-snug text-white sm:text-2xl">{game.name}</h2><p className="mt-3 text-sm font-semibold text-white/85">{game.detail}</p></div>
-          <span aria-hidden="true" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/20 text-xl text-white ring-1 ring-white/20 group-hover:bg-vault-gold group-hover:text-vault-background">→</span>
-        </div>
-      </Link>)}
-    </section>
-    <p className="mt-5 text-center text-xs text-vault-cream/40">ภาพโปรโมตจากเว็บไซต์ทางการ:{' '}{games.map((game, index) => <span key={game.id}><a href={game.sourceUrl} target="_blank" rel="noreferrer" className="underline decoration-white/20 underline-offset-2 hover:text-vault-cream">{game.name}</a>{index < games.length - 1 ? ' · ' : ''}</span>)}</p>
   </main>;
 }
 
@@ -78,5 +62,5 @@ export default function App() {
       <Route path="/admin" element={<ProtectedRoute admin/>}><Route index element={<AdminPage/>}/></Route>
     </Route>
     <Route path="*" element={<main className="p-12 text-center">ไม่พบหน้าที่ต้องการ</main>}/>
-  </Routes><footer className="mt-16 border-t border-zinc-800 bg-zinc-950 px-4 py-6 text-center text-xs text-white/60">ข้อมูลการ์ด: YGOPRODeck · Scryfall · TCGdex · OPTCG API</footer></div></BrowserRouter></AuthProvider>;
+  </Routes><footer className="mt-16 border-t border-zinc-800 bg-zinc-950 px-4 py-6 text-center text-xs text-white/60">Card data and images powered by PokéWallet Cardfight!! Vanguard API</footer></div></BrowserRouter></AuthProvider>;
 }

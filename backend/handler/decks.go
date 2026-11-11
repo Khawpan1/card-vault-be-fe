@@ -14,7 +14,7 @@ type deck = store.Deck
 
 func (a *API) listPublicDecks(w http.ResponseWriter, r *http.Request) {
 	game, q := r.URL.Query().Get("game"), trim(r.URL.Query().Get("q"))
-	if game != "" && game != "yugioh" && game != "mtg" && game != "pokemon" && game != "onepiece" {
+	if game != "" && game != "vanguard" {
 		WriteError(w, http.StatusBadRequest, "invalid_game", "เกมไม่ถูกต้อง")
 		return
 	}
@@ -22,7 +22,7 @@ func (a *API) listPublicDecks(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusBadRequest, "invalid_filter", "คำค้นต้องไม่เกิน 100 ตัวอักษร")
 		return
 	}
-	items, err := a.db.ListPublicDecks(r.Context(), game, q)
+	items, err := a.db.ListPublicDecks(r.Context(), "vanguard", q)
 	if err != nil {
 		WriteError(w, http.StatusInternalServerError, "server_error", "อ่านเด็คสาธารณะไม่สำเร็จ")
 		return
@@ -178,7 +178,7 @@ func (a *API) replaceDeckCards(w http.ResponseWriter, r *http.Request) {
 }
 
 func validDeck(game, name, description string) bool {
-	return (game == "yugioh" || game == "mtg" || game == "pokemon" || game == "onepiece") && len(trim(name)) > 0 && len(trim(name)) <= 100 && len(description) <= 1000
+	return game == "vanguard" && len(trim(name)) > 0 && len(trim(name)) <= 100 && len(description) <= 1000
 }
 
 func (a *API) adminDeleteDeck(w http.ResponseWriter, r *http.Request) {
