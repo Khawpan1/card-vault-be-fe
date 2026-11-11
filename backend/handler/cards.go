@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"card-vault/backend/store"
 )
@@ -20,8 +21,13 @@ func (a *API) listCards(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	game, q := query.Get("game"), trim(query.Get("q"))
 	cardType, rarity := trim(query.Get("type")), trim(query.Get("rarity"))
+	setName, rarityExact := query.Get("setName"), query.Get("rarityExact")
 	if len(q) > 100 || len(cardType) > 100 || len(rarity) > 100 {
 		WriteError(w, http.StatusBadRequest, "invalid_filter", "ช่องค้นหาแต่ละช่องต้องไม่เกิน 100 ตัวอักษร")
+		return
+	}
+	if utf8.RuneCountInString(setName) > 255 || utf8.RuneCountInString(rarityExact) > 100 {
+		WriteError(w, http.StatusBadRequest, "invalid_filter", "ชุดการ์ดหรือความหายากยาวเกินกำหนด")
 		return
 	}
 	if game != "" && game != "vanguard" {
@@ -39,12 +45,22 @@ func (a *API) listCards(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Handler ตรวจ input ก่อนส่งเงื่อนไขค้นไปยัง Store
-	items, total, err := a.db.SearchCards(r.Context(), "vanguard", q, cardType, rarity, limit, offset)
+	filters := store.CardSearch{Query: q, Type: cardType, Rarity: rarity, SetName: setName, RarityExact: rarityExact}
+	items, total, err := a.db.SearchCards(r.Context(), filters, limit, offset)
 	if err != nil {
 		WriteError(w, http.StatusInternalServerError, "server_error", "อ่านคลังการ์ดไม่สำเร็จ")
 		return
 	}
 	WriteJSON(w, http.StatusOK, map[string]any{"items": items, "total": total, "limit": limit, "offset": offset})
+}
+
+func (a *API) cardFilters(w http.ResponseWriter, r *http.Request) {
+	options, err := a.db.CardFilterOptions(r.Context())
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, "server_error", "อ่านตัวเลือกการ์ดไม่สำเร็จ")
+		return
+	}
+	WriteJSON(w, http.StatusOK, options)
 }
 
 func (a *API) getCard(w http.ResponseWriter, r *http.Request) {

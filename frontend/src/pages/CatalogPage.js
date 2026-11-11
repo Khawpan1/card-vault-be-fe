@@ -1,21 +1,35 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { request } from '../api';
 import CardTile from '../components/CardTile';
 import { Empty, ErrorMessage, Loading } from '../components/LoadState';
 
 export default function CatalogPage() {
-  const [filters, setFilters] = useState({ q: '', type: '', rarity: '' });
+  const [filters, setFilters] = useState({ q: '', setName: '', rarityExact: '' });
+  const [options, setOptions] = useState({ sets: [], rarities: [] });
+  const [optionsStatus, setOptionsStatus] = useState('loading');
   const [cards, setCards] = useState([]);
   const [total, setTotal] = useState(0);
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
   const [offset, setOffset] = useState(0);
   const latestRequest = useRef(0);
-  const query = new URLSearchParams({ game: 'vanguard', ...Object.fromEntries(Object.entries(filters).filter(([, value]) => value)) });
-  query.set('limit', '24');
-  query.set('offset', String(offset));
 
-  async function loadCards() {
+  const loadFilterOptions = useCallback(async () => {
+    setOptionsStatus('loading');
+    try {
+      const data = await request('/cards/filters');
+      setOptions({ sets: data.sets || [], rarities: data.rarities || [] });
+      setOptionsStatus('success');
+    } catch {
+      setOptionsStatus('error');
+    }
+  }, []);
+
+  const loadCards = useCallback(async () => {
+    const query = new URLSearchParams({ game: 'vanguard', limit: '24', offset: String(offset) });
+    for (const [key, value] of Object.entries(filters)) {
+      if (value) query.set(key, value);
+    }
     const requestId = ++latestRequest.current;
     setStatus('loading'); setError('');
     try {
@@ -26,16 +40,38 @@ export default function CatalogPage() {
       if (requestId !== latestRequest.current) return;
       setError(err.message); setStatus('error');
     }
-  }
-  useEffect(() => { loadCards(); /* filters and page trigger a new local API request */ }, [filters.q, filters.type, filters.rarity, offset]);
+  }, [filters, offset]);
+
+  useEffect(() => { loadCards(); }, [loadCards]);
+  useEffect(() => { loadFilterOptions(); }, [loadFilterOptions]);
   function update(field, value) { setOffset(0); setFilters((current) => ({ ...current, [field]: value })); }
 
   return <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
     <div className="mb-8"><p className="text-xs font-bold uppercase tracking-[.18em] text-vault-teal">Cardfight!! Vanguard</p><h1 className="mt-2 text-3xl font-black sm:text-4xl">คลังการ์ด Vanguard</h1><p className="mt-2 text-sm text-vault-cream/60">ค้นหาและกรองข้อมูลที่จัดเก็บในฐานข้อมูลของเรา · {total.toLocaleString()} ใบ</p></div>
-    <section aria-label="ตัวกรองการ์ด" className="mb-8 grid gap-3 rounded-2xl border border-white/10 bg-white/[.035] p-4 sm:grid-cols-3">
-      <input aria-label="ค้นหาชื่อการ์ด" value={filters.q} onChange={(e) => update('q', e.target.value)} placeholder="ค้นหาชื่อการ์ด…" className="min-w-0 rounded-xl border border-white/10 bg-white/[.05] px-4 py-3"/>
-      <input aria-label="ประเภท" value={filters.type} onChange={(e) => update('type', e.target.value)} placeholder="ประเภทการ์ด" className="min-w-0 rounded-xl border border-white/10 bg-white/[.05] px-4 py-3"/>
-      <input aria-label="ความหายาก" value={filters.rarity} onChange={(e) => update('rarity', e.target.value)} placeholder="ความหายาก" className="min-w-0 rounded-xl border border-white/10 bg-white/[.05] px-4 py-3"/>
+    <section aria-label="ตัวกรองการ์ด" className="mb-8 rounded-2xl border border-white/10 bg-white/[.035] p-4">
+      <div className="grid gap-3 md:grid-cols-3">
+        <label className="grid min-w-0 gap-2 text-sm">
+          ค้นหาชื่อการ์ด
+          <input value={filters.q} onChange={(e) => update('q', e.target.value)} placeholder="ค้นหาชื่อการ์ด…" className="min-w-0 rounded-xl border border-white/10 bg-vault-background px-4 py-3"/>
+        </label>
+        <label className="grid min-w-0 gap-2 text-sm">
+          ชุดการ์ด
+          <select value={filters.setName} onChange={(e) => update('setName', e.target.value)} disabled={optionsStatus !== 'success'} className="min-w-0 w-full rounded-xl border border-white/10 bg-vault-background px-4 py-3 disabled:opacity-60">
+            <option value="">{optionsStatus === 'loading' ? 'กำลังโหลดชุดการ์ด…' : 'ทุกชุด'}</option>
+            {options.sets.map((set) => <option key={set} value={set}>{set}</option>)}
+          </select>
+        </label>
+        <label className="grid min-w-0 gap-2 text-sm">
+          ความหายาก
+          <select value={filters.rarityExact} onChange={(e) => update('rarityExact', e.target.value)} disabled={optionsStatus !== 'success'} className="min-w-0 w-full rounded-xl border border-white/10 bg-vault-background px-4 py-3 disabled:opacity-60">
+            <option value="">{optionsStatus === 'loading' ? 'กำลังโหลดความหายาก…' : 'ทุกความหายาก'}</option>
+            {options.rarities.map((rarity) => <option key={rarity} value={rarity}>{rarity}</option>)}
+          </select>
+        </label>
+      </div>
+      {optionsStatus === 'error' && <p role="alert" className="mt-3 text-sm text-red-200">
+        โหลดตัวเลือกชุดการ์ดและความหายากไม่สำเร็จ <button type="button" onClick={loadFilterOptions} className="ml-2 underline">โหลดตัวกรองอีกครั้ง</button>
+      </p>}
     </section>
     {status === 'loading' && <Loading/>}
     {status === 'error' && <ErrorMessage message={error} onRetry={loadCards}/>}

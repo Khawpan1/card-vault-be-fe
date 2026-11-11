@@ -10,7 +10,8 @@ them as trusted values from a request body, query string, or path parameter.
 
 | Method and path | Purpose |
 | --- | --- |
-| `GET /cards?game=vanguard&q=&type=&rarity=&limit=&offset=` | Search the local Vanguard catalog. |
+| `GET /cards?game=vanguard&q=&type=&rarity=&setName=&rarityExact=&limit=&offset=` | Search the Vanguard catalog. Dropdown filters match the stored set name and rarity exactly. |
+| `GET /cards/filters` | List distinct set names and rarities in PostgreSQL as `{sets, rarities}`. |
 | `GET /cards/{cardId}` | Read Vanguard card details from PostgreSQL. |
 | `GET /cards/{cardId}/image` | Redirect to a stored TCGTracking image or stream a legacy PokéWallet image through Go. |
 | `GET /decks?game=vanguard&q=` | List public Vanguard decks. |

@@ -51,6 +51,7 @@ func (a *API) Routes() http.Handler {
 		WriteError(w, http.StatusNotFound, "not_found", "ไม่พบ API นี้")
 	})
 	mux.HandleFunc("GET /api/cards", a.listCards)
+	mux.HandleFunc("GET /api/cards/filters", a.cardFilters)
 	mux.HandleFunc("GET /api/cards/{cardId}/image", a.cardImage)
 	mux.HandleFunc("GET /api/cards/{cardId}", a.getCard)
 	mux.HandleFunc("GET /api/decks", a.listPublicDecks)

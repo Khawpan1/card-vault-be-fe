@@ -21,14 +21,44 @@ type Card struct {
 	SourceURL string  `json:"sourceUrl"`
 }
 
-// SearchCards อ่านคลังใน PostgreSQL และคืนจำนวนทั้งหมดเพื่อทำ pagination
-func (s *Store) SearchCards(ctx context.Context, game, query, cardType, rarity string, limit, offset int) ([]Card, int, error) {
+type CardSearch struct {
+	Query       string
+	Type        string
+	Rarity      string
+	SetName     string
+	RarityExact string
+}
+
+type CardFilterOptions struct {
+	Sets     []string `json:"sets"`
+	Rarities []string `json:"rarities"`
+}
+
+func (s *Store) CardFilterOptions(ctx context.Context) (CardFilterOptions, error) {
+	var options CardFilterOptions
+	err := s.Pool.QueryRow(ctx, `SELECT
+		ARRAY(SELECT DISTINCT set_name FROM cards WHERE game='vanguard' AND btrim(set_name) <> '' ORDER BY set_name),
+		ARRAY(SELECT DISTINCT rarity FROM cards WHERE game='vanguard' AND btrim(rarity) <> '' ORDER BY rarity)`).
+		Scan(&options.Sets, &options.Rarities)
+	return options, err
+}
+
+// SearchCards ใช้เงื่อนไขชุดเดียวกันตอนนับและตอนอ่านการ์ดในแต่ละหน้า
+func (s *Store) SearchCards(ctx context.Context, filters CardSearch, limit, offset int) ([]Card, int, error) {
+	const where = ` FROM cards WHERE game='vanguard'
+		AND ($1='' OR name ILIKE '%'||$1||'%')
+		AND ($2='' OR type ILIKE '%'||$2||'%')
+		AND ($3='' OR rarity ILIKE '%'||$3||'%')
+		AND ($4='' OR set_name=$4)
+		AND ($5='' OR rarity=$5)`
+	args := []any{filters.Query, filters.Type, filters.Rarity, filters.SetName, filters.RarityExact}
 	var total int
-	err := s.Pool.QueryRow(ctx, `SELECT count(*) FROM cards WHERE game='vanguard' AND ($1='' OR name ILIKE '%'||$1||'%') AND ($2='' OR type ILIKE '%'||$2||'%') AND ($3='' OR rarity ILIKE '%'||$3||'%')`, query, cardType, rarity).Scan(&total)
+	err := s.Pool.QueryRow(ctx, `SELECT count(*)`+where, args...).Scan(&total)
 	if err != nil {
 		return nil, 0, err
 	}
-	rows, err := s.Pool.Query(ctx, `SELECT id,game,source_id,name,type,rarity,rules_text,image_url,set_name,set_code,source_url FROM cards WHERE game='vanguard' AND ($1='' OR name ILIKE '%'||$1||'%') AND ($2='' OR type ILIKE '%'||$2||'%') AND ($3='' OR rarity ILIKE '%'||$3||'%') ORDER BY lower(name),id LIMIT $4 OFFSET $5`, query, cardType, rarity, limit, offset)
+	rows, err := s.Pool.Query(ctx, `SELECT id,game,source_id,name,type,rarity,rules_text,image_url,set_name,set_code,source_url`+
+		where+` ORDER BY lower(name),id LIMIT $6 OFFSET $7`, append(args, limit, offset)...)
 	if err != nil {
 		return nil, 0, err
 	}

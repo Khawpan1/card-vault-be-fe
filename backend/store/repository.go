@@ -4,7 +4,8 @@ import "context"
 
 // Repository keeps handlers independent from the PostgreSQL connection details.
 type Repository interface {
-	SearchCards(context.Context, string, string, string, string, int, int) ([]Card, int, error)
+	SearchCards(context.Context, CardSearch, int, int) ([]Card, int, error)
+	CardFilterOptions(context.Context) (CardFilterOptions, error)
 	CardByID(context.Context, int64) (Card, error)
 	CreateCard(context.Context, Card) (Card, error)
 	UpdateCard(context.Context, int64, Card) (Card, error)
