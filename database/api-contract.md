@@ -35,7 +35,7 @@ external card metadata API.
 | `POST /decks` | Create a Vanguard deck for the signed-in member. |
 | `PUT /decks/{deckId}` | Edit an owned deck's name, description, or public state. |
 | `DELETE /decks/{deckId}` | Delete an owned Vanguard deck. |
-| `PUT /decks/{deckId}/cards` | Replace a deck's card list with `[{cardId, quantity}]`; all cards must be Vanguard. |
+| `PUT /decks/{deckId}/cards` | Replace a deck's `{cards: [{cardId, quantity}]}`. Each Vanguard card ID can appear once with a quantity from 1 to 4. |
 | `GET /me/collection?game=vanguard` | List the signed-in member's Vanguard collection. |
 | `PUT /me/collection/{cardId}` | Set owned quantity for one Vanguard card. |
 | `DELETE /me/collection/{cardId}` | Remove a card from the signed-in member's collection. |

@@ -12,6 +12,8 @@ import (
 
 type deck = store.Deck
 
+const maxDeckCardCopies = 4
+
 func (a *API) listPublicDecks(w http.ResponseWriter, r *http.Request) {
 	game, q := r.URL.Query().Get("game"), trim(r.URL.Query().Get("q"))
 	if game != "" && game != "vanguard" {
@@ -152,8 +154,12 @@ func (a *API) replaceDeckCards(w http.ResponseWriter, r *http.Request) {
 	seen := map[int64]bool{}
 	cards := make([]store.DeckCard, 0, len(input.Cards))
 	for _, item := range input.Cards {
-		if item.CardID <= 0 || item.Quantity < 1 || item.Quantity > 999 || seen[item.CardID] {
-			WriteError(w, http.StatusBadRequest, "invalid_input", "รหัสการ์ดต้องไม่ซ้ำและจำนวนต้องอยู่ระหว่าง 1 ถึง 999")
+		if item.CardID <= 0 || seen[item.CardID] {
+			WriteError(w, http.StatusBadRequest, "invalid_input", "รหัสการ์ดในเด็คต้องถูกต้องและไม่ซ้ำกัน")
+			return
+		}
+		if item.Quantity < 1 || item.Quantity > maxDeckCardCopies {
+			WriteError(w, http.StatusBadRequest, "invalid_quantity", "การ์ดแต่ละรายการในเด็คใส่ได้ 1 ถึง 4 ใบ")
 			return
 		}
 		seen[item.CardID] = true

@@ -5,30 +5,89 @@ import DecksPage from './DecksPage';
 
 jest.mock('../api', () => ({ request: jest.fn() }));
 
-afterEach(() => jest.clearAllMocks());
+const card = { id: 31, name: 'Blaster Blade', game: 'vanguard', type: 'Normal Unit', rarity: 'Rare', imageUrl: 'https://cdn.tcgtracking.com/product/727149_200w.jpg' };
+const setName = 'BT01: Descent of the King of Knights';
 
-test('สร้างเด็ค ค้นการ์ด เพิ่มลงเด็ค และส่งรายการไป Backend', async () => {
-  const card = { id: 31, sourceId: 'tcgtracking:727149', name: 'Blaster Blade', game: 'vanguard', type: 'Normal Unit', rarity: 'RR', imageUrl: 'https://cdn.tcgtracking.com/product/727149_200w.jpg' };
-  request.mockImplementation((path, options = {}) => {
-    if (path === '/me/decks') return Promise.resolve({ items: [] });
-    if (path.startsWith('/cards?')) return Promise.resolve({ items: [card] });
-    if (path === '/decks' && options.method === 'POST') return Promise.resolve({ deck: { id: 12 } });
-    if (path === '/decks/12/cards' && options.method === 'PUT') return Promise.resolve({ status: 'saved' });
-    return Promise.reject(new Error(`Unexpected API request: ${path}`));
+afterEach(() => request.mockReset());
+
+function mockDecks({ deck, search = () => ({ items: [card], total: 1 }) } = {}) {
+  request.mockImplementation(async (path, options = {}) => {
+    if (path === '/me/decks') return { items: deck ? [deck] : [] };
+    if (path === '/cards/filters') return { sets: [setName], rarities: ['Rare'] };
+    if (path.startsWith('/cards?')) return search(new URLSearchParams(path.split('?')[1]));
+    if (path === '/decks' && options.method === 'POST') return { deck: { id: 12 } };
+    if (path === '/decks/12' && options.method === 'PUT') return { deck: { id: 12 } };
+    if (path === '/decks/12' && deck) return { deck };
+    if (path === '/decks/12/cards' && options.method === 'PUT') return { status: 'saved' };
+    throw new Error(`Unexpected API request: ${path}`);
   });
-
   render(<MemoryRouter><DecksPage/></MemoryRouter>);
-  await screen.findByText('ยังไม่มีเด็ค เริ่มสร้างเด็คแรกของคุณได้เลย');
+}
+
+test('เพิ่มการ์ดได้สูงสุด 4 ใบจากทั้งผลค้นหาและปุ่มบวก แล้วบันทึกเด็ค', async () => {
+  mockDecks();
   fireEvent.click(screen.getByRole('button', { name: '+ สร้างเด็ค' }));
   fireEvent.change(screen.getByLabelText('ชื่อเด็ค'), { target: { value: 'My First Deck' } });
-  fireEvent.change(screen.getByPlaceholderText('ค้นการ์ดในเกมที่เลือกเพื่อเพิ่ม…'), { target: { value: 'Blaster Blade' } });
-  expect(await screen.findByRole('img', { name: 'Blaster Blade' })).toHaveAttribute('src', card.imageUrl);
-  fireEvent.click(await screen.findByRole('button', { name: /Blaster Blade เพิ่มการ์ด/ }));
+  fireEvent.change(screen.getByLabelText('ค้นหาชื่อการ์ด'), { target: { value: 'Blaster Blade' } });
+  const addResult = await screen.findByRole('button', { name: 'Blaster Blade เพิ่มการ์ด' });
+  expect(screen.getByRole('img', { name: 'Blaster Blade' })).toHaveAttribute('src', card.imageUrl);
+  fireEvent.click(addResult);
+  const addCopy = screen.getByRole('button', { name: 'เพิ่ม Blaster Blade' });
+  for (let index = 0; index < 4; index += 1) fireEvent.click(addCopy);
+  expect(addCopy).toBeDisabled();
+  expect(addResult).toBeDisabled();
+  fireEvent.click(addResult);
   fireEvent.click(screen.getByRole('button', { name: 'บันทึกเด็ค' }));
 
   await waitFor(() => expect(request).toHaveBeenCalledWith('/decks/12/cards', {
     method: 'PUT',
-    body: JSON.stringify({ cards: [{ cardId: 31, quantity: 1 }] })
+    body: JSON.stringify({ cards: [{ cardId: 31, quantity: 4 }] }),
   }));
-  expect(request).toHaveBeenCalledWith('/decks', expect.objectContaining({ method: 'POST' }));
+});
+
+test('กรองตามชื่อ ชุด และความหายาก พร้อมเปิดหน้าถัดไปและย้อนกลับ', async () => {
+  mockDecks({ search: (query) => ({
+    total: 10,
+    items: query.get('offset') === '8' ? [{ ...card, id: 32, name: 'Blaster Blade (Alt Art)' }] : [card],
+  }) });
+  fireEvent.click(screen.getByRole('button', { name: '+ สร้างเด็ค' }));
+  const searchBox = screen.getByLabelText('ค้นหาชื่อการ์ด');
+  fireEvent.change(searchBox, { target: { value: 'Blaster' } });
+  await screen.findByRole('option', { name: setName });
+  fireEvent.change(screen.getByLabelText('ชุดการ์ด'), { target: { value: setName } });
+  fireEvent.change(screen.getByLabelText('ความหายาก'), { target: { value: 'Rare' } });
+
+  fireEvent.click(await screen.findByRole('button', { name: 'ถัดไป' }));
+  expect(await screen.findByRole('button', { name: 'Blaster Blade (Alt Art) เพิ่มการ์ด' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'ถัดไป' })).toBeDisabled();
+  const query = new URLSearchParams({ game: 'vanguard', limit: '8', offset: '8', q: 'Blaster', setName, rarityExact: 'Rare' });
+  expect(request).toHaveBeenCalledWith(`/cards?${query}`);
+
+  fireEvent.click(screen.getByRole('button', { name: 'ก่อนหน้า' }));
+  await screen.findByRole('button', { name: 'Blaster Blade เพิ่มการ์ด' });
+  expect(screen.getByRole('button', { name: 'ก่อนหน้า' })).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'ถัดไป' }));
+  await screen.findByText('หน้า 2 / 2');
+  fireEvent.change(screen.getByLabelText('ความหายาก'), { target: { value: '' } });
+  expect(await screen.findByText('หน้า 1 / 2')).toBeInTheDocument();
+});
+
+test('เด็คเดิมที่เกิน 4 ใบบันทึกได้หลังลดจำนวน และส่งข้อมูลแก้ไขตามสัญญา API', async () => {
+  mockDecks({ deck: { id: 12, name: 'Old Deck', cards: [{ ...card, quantity: 8 }] } });
+  fireEvent.click(await screen.findByRole('button', { name: 'แก้ไข' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('ลดจำนวนการ์ดที่เกิน 4 ใบ');
+  const save = screen.getByRole('button', { name: 'บันทึกเด็ค' });
+  expect(save).toBeDisabled();
+  for (let index = 0; index < 4; index += 1) fireEvent.click(screen.getByRole('button', { name: 'ลด Blaster Blade' }));
+  expect(save).toBeEnabled();
+  fireEvent.click(save);
+
+  await waitFor(() => expect(request).toHaveBeenCalledWith('/decks/12/cards', {
+    method: 'PUT',
+    body: JSON.stringify({ cards: [{ cardId: 31, quantity: 4 }] }),
+  }));
+  expect(request).toHaveBeenCalledWith('/decks/12', {
+    method: 'PUT',
+    body: JSON.stringify({ name: 'Old Deck', description: '', isPublic: false }),
+  });
 });
