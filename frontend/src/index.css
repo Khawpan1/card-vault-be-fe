@@ -2,36 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  background: #f4f1eb;
-  color: #171717;
-  font-family: Tahoma, "Leelawadee UI", Arial, system-ui, sans-serif;
-  font-feature-settings: "kern";
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
+@layer base {
+  :root { color-scheme: light; }
+
+  body {
+    @apply bg-vault-background font-sans text-vault-ink;
+    font-feature-settings: "kern";
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+  button { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+
+  input, select, textarea { @apply text-vault-ink; }
+  select option { @apply bg-vault-surface text-vault-ink; }
+  input[type="checkbox"] { accent-color: theme('colors.vault.orange'); }
+  input::placeholder, textarea::placeholder { @apply text-vault-muted; }
+
+  input:focus, select:focus, textarea:focus, a:focus-visible, button:focus-visible {
+    outline: 2px solid theme('colors.vault.orange');
+    outline-offset: 2px;
+  }
+
+  ::selection { @apply bg-vault-highlight text-vault-ink; }
+  h1, h2, h3 { @apply font-display; letter-spacing: -0.025em; }
 }
-
-button, input, select, textarea { font: inherit; }
-
-button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
-
-button { cursor: pointer; }
-button:disabled { cursor: not-allowed; }
-
-input, select, textarea {
-  color: #171717;
-  transition: border-color 120ms ease, background-color 120ms ease;
-}
-
-input::placeholder, textarea::placeholder { color: rgb(23 23 23 / 48%); }
-
-input:focus, select:focus, textarea:focus {
-  outline: 2px solid rgb(245 160 0 / 55%);
-  outline-offset: 1px;
-  border-color: #f5a000;
-}
-
-::selection { background: #f5a000; color: #171717; }
-
-h1, h2, h3 { font-family: "Arial Rounded MT Bold", Tahoma, Arial, sans-serif; letter-spacing: -0.025em; }

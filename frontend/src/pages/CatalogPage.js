@@ -47,35 +47,35 @@ export default function CatalogPage() {
   function update(field, value) { setOffset(0); setFilters((current) => ({ ...current, [field]: value })); }
 
   return <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-    <div className="mb-8"><p className="text-xs font-bold uppercase tracking-[.18em] text-vault-teal">Cardfight!! Vanguard</p><h1 className="mt-2 text-3xl font-black sm:text-4xl">คลังการ์ด Vanguard</h1><p className="mt-2 text-sm text-vault-cream/60">ค้นหาและกรองข้อมูลที่จัดเก็บในฐานข้อมูลของเรา · {total.toLocaleString()} ใบ</p></div>
-    <section aria-label="ตัวกรองการ์ด" className="mb-8 rounded-2xl border border-white/10 bg-white/[.035] p-4">
+    <div className="mb-8"><p className="text-xs font-bold uppercase tracking-[.18em] text-vault-teal">Cardfight!! Vanguard</p><h1 className="mt-2 text-3xl font-black sm:text-4xl">คลังการ์ด Vanguard</h1><p className="mt-2 text-sm text-vault-muted">ค้นหาและกรองข้อมูลที่จัดเก็บในฐานข้อมูลของเรา · {total.toLocaleString()} ใบ</p></div>
+    <section aria-label="ตัวกรองการ์ด" className="mb-8 rounded-2xl border border-vault-line bg-vault-surface p-4 shadow-sm">
       <div className="grid gap-3 md:grid-cols-3">
-        <label className="grid min-w-0 gap-2 text-sm">
+        <label className="grid min-w-0 gap-2 text-sm font-semibold">
           ค้นหาชื่อการ์ด
-          <input value={filters.q} onChange={(e) => update('q', e.target.value)} placeholder="ค้นหาชื่อการ์ด…" className="min-w-0 rounded-xl border border-white/10 bg-vault-background px-4 py-3"/>
+          <input value={filters.q} onChange={(e) => update('q', e.target.value)} placeholder="ค้นหาชื่อการ์ด…" className="min-w-0 rounded-xl border border-vault-control bg-vault-surface px-4 py-3 font-normal"/>
         </label>
-        <label className="grid min-w-0 gap-2 text-sm">
+        <label className="grid min-w-0 gap-2 text-sm font-semibold">
           ชุดการ์ด
-          <select value={filters.setName} onChange={(e) => update('setName', e.target.value)} disabled={optionsStatus !== 'success'} className="min-w-0 w-full rounded-xl border border-white/10 bg-vault-background px-4 py-3 disabled:opacity-60">
+          <select value={filters.setName} onChange={(e) => update('setName', e.target.value)} disabled={optionsStatus !== 'success'} className="min-w-0 w-full rounded-xl border border-vault-control bg-vault-surface px-4 py-3 font-normal disabled:opacity-60">
             <option value="">{optionsStatus === 'loading' ? 'กำลังโหลดชุดการ์ด…' : 'ทุกชุด'}</option>
             {options.sets.map((set) => <option key={set} value={set}>{set}</option>)}
           </select>
         </label>
-        <label className="grid min-w-0 gap-2 text-sm">
+        <label className="grid min-w-0 gap-2 text-sm font-semibold">
           ความหายาก
-          <select value={filters.rarityExact} onChange={(e) => update('rarityExact', e.target.value)} disabled={optionsStatus !== 'success'} className="min-w-0 w-full rounded-xl border border-white/10 bg-vault-background px-4 py-3 disabled:opacity-60">
+          <select value={filters.rarityExact} onChange={(e) => update('rarityExact', e.target.value)} disabled={optionsStatus !== 'success'} className="min-w-0 w-full rounded-xl border border-vault-control bg-vault-surface px-4 py-3 font-normal disabled:opacity-60">
             <option value="">{optionsStatus === 'loading' ? 'กำลังโหลดความหายาก…' : 'ทุกความหายาก'}</option>
             {options.rarities.map((rarity) => <option key={rarity} value={rarity}>{rarity}</option>)}
           </select>
         </label>
       </div>
-      {optionsStatus === 'error' && <p role="alert" className="mt-3 text-sm text-red-200">
+      {optionsStatus === 'error' && <p role="alert" className="mt-3 text-sm text-red-700">
         โหลดตัวเลือกชุดการ์ดและความหายากไม่สำเร็จ <button type="button" onClick={loadFilterOptions} className="ml-2 underline">โหลดตัวกรองอีกครั้ง</button>
       </p>}
     </section>
     {status === 'loading' && <Loading/>}
     {status === 'error' && <ErrorMessage message={error} onRetry={loadCards}/>}
     {status === 'success' && (cards.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">{cards.map((card) => <CardTile key={card.id} card={card}/>)}</div> : <Empty/>)}
-    {status === 'success' && total > 24 && <nav aria-label="เปลี่ยนหน้ารายการการ์ด" className="mt-8 flex items-center justify-center gap-4"><button disabled={offset===0} onClick={() => setOffset(Math.max(0,offset-24))} className="rounded border border-white/20 px-4 py-2 disabled:opacity-30">ก่อนหน้า</button><span className="text-sm text-vault-cream/60">หน้า {Math.floor(offset/24)+1} / {Math.ceil(total/24)}</span><button disabled={offset+cards.length>=total} onClick={() => setOffset(offset+24)} className="rounded border border-white/20 px-4 py-2 disabled:opacity-30">ถัดไป</button></nav>}
+    {status === 'success' && total > 24 && <nav aria-label="เปลี่ยนหน้ารายการการ์ด" className="mt-8 flex items-center justify-center gap-4"><button disabled={offset===0} onClick={() => setOffset(Math.max(0,offset-24))} className="rounded-lg border border-vault-line bg-vault-surface px-4 py-2 hover:bg-vault-inset disabled:opacity-50">ก่อนหน้า</button><span className="text-sm text-vault-muted">หน้า {Math.floor(offset/24)+1} / {Math.ceil(total/24)}</span><button disabled={offset+cards.length>=total} onClick={() => setOffset(offset+24)} className="rounded-lg border border-vault-line bg-vault-surface px-4 py-2 hover:bg-vault-inset disabled:opacity-50">ถัดไป</button></nav>}
   </main>;
 }
