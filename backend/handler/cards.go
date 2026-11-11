@@ -14,7 +14,7 @@ import (
 
 type card = store.Card
 
-var vanguardSourceID = regexp.MustCompile(`^(cfv_[a-f0-9]+|[a-f0-9]{64})$`)
+var legacyVanguardSourceID = regexp.MustCompile(`^(cfv_[a-f0-9]+|[a-f0-9]{64})$`)
 
 func (a *API) listCards(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
@@ -71,10 +71,6 @@ func (a *API) getCard(w http.ResponseWriter, r *http.Request) {
 
 // cardImage ซ่อน API key ไว้ใน Go และเก็บภาพไว้ในหน่วยความจำ 24 ชั่วโมง
 func (a *API) cardImage(w http.ResponseWriter, r *http.Request) {
-	if a.pokewalletKey == "" {
-		WriteError(w, http.StatusServiceUnavailable, "image_unavailable", "ยังไม่ได้ตั้งค่า POKEWALLET_API_KEY")
-		return
-	}
 	id, ok := positiveID(r.PathValue("cardId"))
 	if !ok {
 		WriteError(w, http.StatusBadRequest, "invalid_id", "รหัสการ์ดไม่ถูกต้อง")
@@ -89,7 +85,20 @@ func (a *API) cardImage(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusInternalServerError, "server_error", "อ่านรูปการ์ดไม่สำเร็จ")
 		return
 	}
+	imageURL, parseErr := url.Parse(item.ImageURL)
+	if parseErr == nil && imageURL.Scheme == "https" && imageURL.Host == "cdn.tcgtracking.com" && imageURL.User == nil {
+		http.Redirect(w, r, imageURL.String(), http.StatusTemporaryRedirect)
+		return
+	}
 	key := item.SourceID
+	if !legacyVanguardSourceID.MatchString(key) || item.ImageURL == "" {
+		WriteError(w, http.StatusNotFound, "image_unavailable", "ไม่พบรูปการ์ด")
+		return
+	}
+	if a.pokewalletKey == "" {
+		WriteError(w, http.StatusServiceUnavailable, "image_unavailable", "ยังไม่ได้ตั้งค่า POKEWALLET_API_KEY")
+		return
+	}
 	now := time.Now()
 	a.imageCacheMu.Lock()
 	cached, found := a.imageCache[key]
@@ -214,12 +223,12 @@ func (a *API) deleteCard(w http.ResponseWriter, r *http.Request) {
 }
 
 func validCard(c card) bool {
-	if c.Game != "vanguard" || !vanguardSourceID.MatchString(trim(c.SourceID)) {
+	if c.Game != "vanguard" {
 		return false
 	}
 	setNameOK := c.SetName == nil || len(*c.SetName) <= 255
 	setCodeOK := c.SetCode == nil || len(*c.SetCode) <= 50
-	return len(trim(c.SourceID)) > 0 && len(trim(c.SourceID)) <= 150 && len(trim(c.Name)) > 0 && len(trim(c.Name)) <= 255 && len(trim(c.Type)) > 0 && len(trim(c.Type)) <= 255 && len(trim(c.Rarity)) > 0 && len(trim(c.Rarity)) <= 100 && len(c.RulesText) <= 20000 && setNameOK && setCodeOK && secureURL(c.ImageURL) && secureURL(c.SourceURL)
+	return len(trim(c.SourceID)) > 0 && len(trim(c.SourceID)) <= 150 && len(trim(c.Name)) > 0 && len(trim(c.Name)) <= 255 && len(trim(c.Type)) > 0 && len(trim(c.Type)) <= 255 && len(trim(c.Rarity)) > 0 && len(trim(c.Rarity)) <= 100 && len(c.RulesText) <= 20000 && setNameOK && setCodeOK && (c.ImageURL == "" || secureURL(c.ImageURL)) && secureURL(c.SourceURL)
 }
 
 func secureURL(raw string) bool {

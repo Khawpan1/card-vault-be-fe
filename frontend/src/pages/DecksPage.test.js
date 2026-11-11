@@ -11,7 +11,7 @@ jest.mock('../auth/AuthContext', () => ({
 afterEach(() => jest.clearAllMocks());
 
 test('สร้างเด็ค ค้นการ์ด เพิ่มลงเด็ค และส่งรายการไป Backend', async () => {
-  const card = { id: 31, sourceId: 'cfv_aabbcc', name: 'Blaster Blade', game: 'vanguard', type: 'Normal Unit', rarity: 'RR', imageUrl: '' };
+  const card = { id: 31, sourceId: 'tcgtracking:727149', name: 'Blaster Blade', game: 'vanguard', type: 'Normal Unit', rarity: 'RR', imageUrl: 'https://cdn.tcgtracking.com/product/727149_200w.jpg' };
   request.mockImplementation((path, options = {}) => {
     if (path === '/me/decks') return Promise.resolve({ items: [] });
     if (path.startsWith('/cards?')) return Promise.resolve({ items: [card] });
@@ -25,7 +25,7 @@ test('สร้างเด็ค ค้นการ์ด เพิ่มลง
   fireEvent.click(screen.getByRole('button', { name: '+ สร้างเด็ค' }));
   fireEvent.change(screen.getByLabelText('ชื่อเด็ค'), { target: { value: 'My First Deck' } });
   fireEvent.change(screen.getByPlaceholderText('ค้นการ์ดในเกมที่เลือกเพื่อเพิ่ม…'), { target: { value: 'Blaster Blade' } });
-  expect(await screen.findByRole('img', { name: 'Blaster Blade' })).toHaveAttribute('src', 'http://localhost:8080/api/cards/31/image');
+  expect(await screen.findByRole('img', { name: 'Blaster Blade' })).toHaveAttribute('src', card.imageUrl);
   fireEvent.click(await screen.findByRole('button', { name: /Blaster Blade เพิ่มการ์ด/ }));
   fireEvent.click(screen.getByRole('button', { name: 'บันทึกเด็ค' }));
 

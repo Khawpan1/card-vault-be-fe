@@ -12,14 +12,14 @@ them as trusted values from a request body, query string, or path parameter.
 | --- | --- |
 | `GET /cards?game=vanguard&q=&type=&rarity=&limit=&offset=` | Search the local Vanguard catalog. |
 | `GET /cards/{cardId}` | Read Vanguard card details from PostgreSQL. |
-| `GET /cards/{cardId}/image` | Stream a PokéWallet image through Go; key remains server-side and responses are cached for 24 hours. |
+| `GET /cards/{cardId}/image` | Redirect to a stored TCGTracking image or stream a legacy PokéWallet image through Go. |
 | `GET /decks?game=vanguard&q=` | List public Vanguard decks. |
 | `GET /decks/{deckId}` | Read a public Vanguard deck; private decks are visible only to their owner. |
 | `GET /decks/{deckId}/reviews` | Read reviews for a public Vanguard deck. |
 
 List responses use `{items, total, limit, offset}`. Card metadata, search, filters,
 decks, and collections use PostgreSQL; normal catalog requests do not call the
-PokéWallet metadata/search API.
+external card metadata API.
 
 ## Authentication and member
 
@@ -60,16 +60,8 @@ All `/admin/*` routes require a verified JWT whose role is `admin`.
 | `GET /admin/reviews` | List Vanguard reviews for moderation. |
 | `DELETE /admin/reviews/{reviewId}` | Remove an inappropriate review. |
 
-## PokéWallet source fields used by the one-time seed
+## Open TCG API fields used by the seed
 
-- `/cfv/sets`: `name`, `set_code`, `set_id`, `card_count`, `language`, `release_date`.
-- `/cfv/sets/{set_id}?page=1&limit=200`: `id`, `card_info.name`,
-  `card_info.card_type`, `card_info.unit`, `card_info.nation`, `card_info.clan`,
-  `card_info.rarity`, `card_info.card_text`, `card_info.set_name`,
-  `card_info.set_code`, `card_info.product_type`, and `images.languages`.
-- Seed paginates every set (limit 200), includes every `product_type: "card"`
-  record with an ID and name, and excludes sealed or unclassified products.
-  Missing type/rarity values are marked `ไม่ระบุ`; the checkpoint lets a rerun
-  resume after the API free-tier rate limit.
-- Image IDs are used at `/cfv/images/{id}` by Go with the API key. SQL stores the
-  source image URL; it does not contain downloaded image files.
+- `/v1/16/sets` provides the set ID, name, and abbreviation.
+- `/v1/16/sets/{id}/cards` provides product ID, name, rarity, image URL, and Vanguard fields such as `ext_data.unit`, `ext_data.nation`, and `ext_data.description`.
+- The seed stores `tcgtracking:{productId}` as the source ID and saves the public image URL.

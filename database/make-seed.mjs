@@ -1,177 +1,133 @@
-// สร้าง database/seed.sql จาก PokéWallet เพียงครั้งเดียว (ไม่เรียก API จากหน้าเว็บ)
-// ต้องตั้ง POKEWALLET_API_KEY ใน environment ก่อนรัน
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+// ดึงการ์ด Vanguard ทีละเซ็ต แล้วสร้าง SQL สำหรับนำเข้า PostgreSQL
+import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { setTimeout as wait } from 'node:timers/promises';
 
-const API = 'https://api.pokewallet.io/cfv';
-const SOURCE_URL = 'https://pokewallet.io/api-docs/cardfight-vanguard';
-const OUTPUT = fileURLToPath(new URL('./seed.sql', import.meta.url));
-const PROGRESS_DIR = fileURLToPath(new URL('./.make-seed-progress/', import.meta.url));
-const PROGRESS = fileURLToPath(new URL('./.make-seed-progress/state.json', import.meta.url));
-const API_KEY = process.env.POKEWALLET_API_KEY;
-const PAGE_SIZE = 200;
-const CARD_LIMIT = process.argv.includes('--all') ? Infinity : Number(process.env.SEED_CARD_LIMIT || 40);
-if (CARD_LIMIT !== Infinity && (!Number.isInteger(CARD_LIMIT) || CARD_LIMIT < 1)) {
-  throw new Error('SEED_CARD_LIMIT ต้องเป็นจำนวนเต็มมากกว่า 0');
-}
-const MIN_REQUEST_INTERVAL_MS = 36000; // Free plan: max 100 calls per hour.
-
-if (!API_KEY) throw new Error('กรุณาตั้ง POKEWALLET_API_KEY ใน environment ก่อนรัน seed');
-
-let lastRequestAt = 0;
+const API = 'https://openapi.tcgtracking.com/v1/16';
+const CACHE = new URL('./.make-seed-progress/open-tcg/', import.meta.url);
+const OUTPUT = new URL('./seed.sql', import.meta.url);
+const limits = { name: 255, type: 255, rarity: 100, setName: 255, setCode: 50 };
 
 async function getJSON(path) {
-  const wait = MIN_REQUEST_INTERVAL_MS - (Date.now() - lastRequestAt);
-  if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
-  lastRequestAt = Date.now();
-
-  const response = await fetch(`${API}${path}`, {
-    headers: { Accept: 'application/json', 'X-API-Key': API_KEY },
-  });
-  if (response.status === 429) {
-    const retryAfter = Number(response.headers.get('retry-after'));
-    const limitInfo = await response.json().catch(() => ({}));
-    const dailyLimit = limitInfo.message?.toLowerCase().includes('daily')
-      || limitInfo.limits?.daily?.remaining === 0;
-    const waitSeconds = Number.isFinite(retryAfter) && retryAfter > 0
-      ? retryAfter
-      : (dailyLimit ? 86400 : 3600);
-    throw new Error(`PokéWallet ถึง rate limit แล้ว; รอประมาณ ${Math.ceil(waitSeconds / 60)} นาทีแล้วรันใหม่ สคริปต์จะทำต่อจากชุดเดิม`);
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      const response = await fetch(`${API}${path}`, { signal: AbortSignal.timeout(30000) });
+      if (response.ok) return await response.json();
+      if (response.status !== 429 && response.status < 500) {
+        throw new Error(`HTTP ${response.status} ${path}`, { cause: 'permanent' });
+      }
+      const retryAfter = response.headers.get('retry-after');
+      const delay = Number(retryAfter) * 1000 || Date.parse(retryAfter) - Date.now();
+      if (attempt >= 4) throw new Error(`HTTP ${response.status} ${path}`);
+      await wait(Math.max(delay || 0, attempt * 2000));
+    } catch (error) {
+      if (attempt >= 4 || error.cause === 'permanent') throw error;
+      await wait(attempt * 2000);
+    }
   }
-  if (!response.ok) {
-    throw new Error(`PokéWallet ตอบ ${response.status}; หยุดเพื่อไม่ให้เขียน seed ที่ไม่ครบ`);
+}
+
+async function save(file, content) {
+  const temporary = new URL(`${file.href}.tmp`);
+  await writeFile(temporary, content, 'utf8');
+  await rename(temporary, file);
+}
+
+async function readSet(set) {
+  const file = new URL(`${set.id}.json`, CACHE);
+  let data;
+  if (!process.argv.includes('--refresh')) {
+    data = await readFile(file, 'utf8').then(JSON.parse).catch((error) => {
+      if (error.code !== 'ENOENT') throw error;
+    });
   }
-  return response.json();
+  const loadedFromCache = Boolean(data);
+  if (!loadedFromCache) data = await getJSON(`/sets/${set.id}/cards`);
+  if (data.set_id !== set.id || data.product_type !== 'cards'
+      || !Array.isArray(data.products) || data.products.length !== data.product_count) {
+    throw new Error(`ผลลัพธ์ของเซ็ต ${set.id} ไม่ตรงกับรายการการ์ดที่ API ระบุ`);
+  }
+  if (!loadedFromCache) await save(file, JSON.stringify(data));
+  return data.products;
 }
 
-function saveProgress(progress) {
-  mkdirSync(PROGRESS_DIR, { recursive: true });
-  const temporary = `${PROGRESS}.tmp`;
-  writeFileSync(temporary, JSON.stringify(progress), 'utf8');
-  renameSync(temporary, PROGRESS);
-}
-
-function saveSetCards(index, cards) {
-  mkdirSync(PROGRESS_DIR, { recursive: true });
-  const filename = fileURLToPath(new URL(`./.make-seed-progress/${String(index).padStart(4, '0')}.json`, import.meta.url));
-  const temporary = `${filename}.tmp`;
-  writeFileSync(temporary, JSON.stringify(cards), 'utf8');
-  renameSync(temporary, filename);
-}
-
-function sql(value) {
-  if (value === null || value === undefined || value === '') return 'NULL';
-  return `'${String(value).replace(/[ \t]+$/gm, '').replaceAll("'", "''")}'`;
-}
-
-function plainText(value) {
-  return String(value || '')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div|li)>/gi, '\n')
-    .replace(/<[^>]*>/g, '')
-    .replaceAll('&nbsp;', ' ')
-    .replaceAll('&amp;', '&')
-    .replaceAll('&lt;', '<')
-    .replaceAll('&gt;', '>')
-    .replaceAll('&quot;', '"')
-    .replaceAll('&#39;', "'")
+function plainText(value = '') {
+  return String(value ?? '')
+    .replace(/<br\s*\/?>|<\/(?:p|div|li)>/gi, '\n')
+    .replace(/<\/?(?:em|strong|b|i|p|div|span|li|ul|ol)\b[^>]*>/gi, '')
+    .replace(/&(amp|nbsp|lt|gt|quot|#39|apos);/g, (_, key) => ({
+      amp: '&', nbsp: ' ', lt: '<', gt: '>', quot: '"', '#39': "'", apos: "'",
+    })[key])
     .trim();
 }
 
-let progress = existsSync(PROGRESS)
-  ? JSON.parse(readFileSync(PROGRESS, 'utf8'))
-  : { sets: null, setIndex: 0, page: 1, skipped: 0 };
-
-if (!progress.sets) {
-  const setsResponse = await getJSON('/sets');
-  progress.sets = (setsResponse.data || [])
-    .filter((set) => set.set_id)
-    .sort((left, right) => String(left.set_id).localeCompare(String(right.set_id)));
-  saveProgress(progress);
+function sql(value) {
+  if (value == null) return 'NULL';
+  return `'${String(value).replaceAll('\0', '').replace(/[^\S\r\n]+$/gm, '').replaceAll("'", "''")}'`;
 }
 
-const cardsById = new Map();
-for (let index = 0; index < progress.setIndex; index += 1) {
-  const filename = fileURLToPath(new URL(`./.make-seed-progress/${String(index).padStart(4, '0')}.json`, import.meta.url));
-  if (!existsSync(filename)) {
-    throw new Error(`ไม่พบ checkpoint ของชุดที่ ${index + 1}; อย่าลบโฟลเดอร์ database/.make-seed-progress`);
-  }
-  for (const card of JSON.parse(readFileSync(filename, 'utf8'))) cardsById.set(card.sourceId, card);
+const { sets } = await getJSON('/sets');
+if (!Array.isArray(sets) || !sets.length || sets.some((set) => !Number.isSafeInteger(set.id))) {
+  throw new Error('อ่านรายการเซ็ต Vanguard ไม่สำเร็จ');
 }
+await mkdir(CACHE, { recursive: true });
 
-let currentSetCards = new Map();
-while (progress.setIndex < progress.sets.length && cardsById.size < CARD_LIMIT) {
-  const set = progress.sets[progress.setIndex];
-  const detail = await getJSON(`/sets/${encodeURIComponent(set.set_id)}?page=${progress.page}&limit=${PAGE_SIZE}`);
-  for (const card of detail.cards || []) {
-    const info = card.card_info || {};
-    // รวมการ์ดจริงทุกใบจากทุกชุด ไม่รวม sealed products
-    if (!card.id || info.product_type !== 'card' || !info.name) {
-      progress.skipped += 1;
-      continue;
+const cards = new Map();
+for (const [index, set] of sets.entries()) {
+  for (const product of await readSet(set)) {
+    if (!Number.isSafeInteger(product.id) || !product.name?.trim()) {
+      throw new Error(`รายการการ์ดในเซ็ต ${set.id} ขาดรหัสหรือชื่อ`);
     }
-    const type = [info.card_type, info.unit, info.nation, info.clan].filter(Boolean).join(' · ');
-    currentSetCards.set(card.id, {
-      sourceId: card.id,
-      name: info.name,
-      type: type || 'ไม่ระบุ',
-      rarity: info.rarity || 'ไม่ระบุ',
-      rulesText: plainText(info.card_text || info.flavor_text) || '',
-      imageUrl: `${API}/images/${encodeURIComponent(card.id)}`,
-      setName: info.set_name || detail.set?.name || set.name,
-      setCode: info.set_code || detail.set?.set_code || set.set_code,
-      sourceUrl: SOURCE_URL,
-    });
+    // เซ็ตเก่าใช้ Unit/Description ส่วนเซ็ตใหม่ใช้ unit/description
+    const info = Object.fromEntries(Object.entries(product.ext_data || {})
+      .map(([key, value]) => [key.toLowerCase(), value]));
+    const card = {
+      sourceId: `tcgtracking:${product.id}`,
+      name: product.name.trim(),
+      type: [info.unit, info.nation, info.clan].filter(Boolean).join(' · ') || 'ไม่ระบุ',
+      rarity: product.rarity || info.raritydbname || 'ไม่ระบุ',
+      rulesText: plainText(info.description),
+      imageUrl: product.image_url || '',
+      setName: set.name || null,
+      setCode: set.abbreviation || null,
+      sourceUrl: `https://openapi.tcgtracking.com/v1/products/${product.id}`,
+    };
+    for (const [field, max] of Object.entries(limits)) {
+      if (card[field] && [...card[field]].length > max) {
+        throw new Error(`การ์ด ${product.id}: ${field} ยาวเกิน ${max} ตัวอักษร`);
+      }
+    }
+    cards.set(product.id, card);
   }
-
-  const totalPages = Number(detail.pagination?.total_pages || 1);
-  if (progress.page >= totalPages) {
-    saveSetCards(progress.setIndex, [...currentSetCards.values()]);
-    for (const card of currentSetCards.values()) cardsById.set(card.sourceId, card);
-    currentSetCards = new Map();
-    progress.setIndex += 1;
-    progress.page = 1;
-    // บันทึกทีละชุด ลดการเขียนไฟล์ใหญ่ซ้ำทุกหน้า
-    saveProgress(progress);
-  } else {
-    progress.page += 1;
-  }
-
-  if (progress.setIndex % 10 === 0 && progress.page === 1) {
-    console.log(`ดึงแล้ว ${progress.setIndex}/${progress.sets.length} ชุด · การ์ด ${cardsById.size} ใบ`);
+  if ((index + 1) % 25 === 0 || index + 1 === sets.length) {
+    console.log(`อ่าน ${index + 1}/${sets.length} เซ็ต · ${cards.size} รายการ`);
   }
 }
+if (!cards.size) throw new Error('ไม่พบการ์ด Vanguard');
 
-const cards = [...cardsById.values()].slice(0, CARD_LIMIT);
-if (!cards.length) throw new Error('ไม่พบการ์ด Vanguard ที่นำเข้าได้; ไม่เขียนทับ seed.sql');
-
-const values = cards.map((card) => `  (${[
-  'vanguard', card.sourceId, card.name, card.type, card.rarity,
-  card.rulesText, card.imageUrl, card.setName, card.setCode, card.sourceUrl,
-].map(sql).join(', ')})`);
-
-const lines = [
-  '-- สร้างโดย database/make-seed.mjs; รันสคริปต์ใหม่เพื่ออัปเดตข้อมูลจาก PokéWallet',
-  '-- ไม่ดาวน์โหลดไฟล์ภาพ; เว็บขอรูปผ่าน Backend ที่ซ่อน API key และ cache 24 ชั่วโมง',
-  `-- ชุดข้อมูล: ${Number.isFinite(CARD_LIMIT) ? `ตัวอย่าง Vanguard ${cards.length} ใบ` : `Vanguard ทั้ง ${progress.sets.length} ชุด`}; ข้ามรายการที่ไม่ใช่การ์ดหรือไม่มีชื่อ ${progress.skipped} รายการ`,
-  '',
-  'BEGIN;',
-  'INSERT INTO cards (game, source_id, name, type, rarity, rules_text, image_url, set_name, set_code, source_url)',
-  'VALUES',
-  values.join(',\n'),
-  'ON CONFLICT (game, source_id) DO UPDATE SET',
-  '  name = EXCLUDED.name,',
-  '  type = EXCLUDED.type,',
-  '  rarity = EXCLUDED.rarity,',
-  '  rules_text = EXCLUDED.rules_text,',
-  '  image_url = EXCLUDED.image_url,',
-  '  set_name = EXCLUDED.set_name,',
-  '  set_code = EXCLUDED.set_code,',
-  '  source_url = EXCLUDED.source_url,',
-  '  updated_at = now();',
-  'COMMIT;',
-  '',
-];
-
-writeFileSync(OUTPUT, lines.join('\n'), 'utf8');
-console.log(`เขียน ${OUTPUT}: การ์ดไม่ซ้ำ ${cards.length} ใบ จาก ${progress.sets.length} ชุด; ข้าม ${progress.skipped} รายการ`);
+const rows = [...cards.values()];
+const lines = ['-- Vanguard จาก Open TCG API (TCGTracking)', 'BEGIN;', 'SET LOCAL standard_conforming_strings = on;'];
+for (let offset = 0; offset < rows.length; offset += 500) {
+  const values = rows.slice(offset, offset + 500).map((card) => `(${[
+    'vanguard', card.sourceId, card.name, card.type, card.rarity,
+    card.rulesText, card.imageUrl, card.setName, card.setCode, card.sourceUrl,
+  ].map(sql).join(', ')})`);
+  lines.push(
+    'INSERT INTO public.cards (game, source_id, name, type, rarity, rules_text, image_url, set_name, set_code, source_url) VALUES',
+    values.join(',\n'),
+    `ON CONFLICT (game, source_id) DO UPDATE SET
+      name = EXCLUDED.name, type = EXCLUDED.type, rarity = EXCLUDED.rarity,
+      rules_text = EXCLUDED.rules_text, image_url = EXCLUDED.image_url,
+      set_name = EXCLUDED.set_name, set_code = EXCLUDED.set_code,
+      source_url = EXCLUDED.source_url, updated_at = now();`,
+  );
+}
+lines.push('COMMIT;', '');
+await save(OUTPUT, lines.join('\n'));
+console.log(JSON.stringify({
+  sets: sets.length,
+  cards: rows.length,
+  withoutRulesText: rows.filter((card) => !card.rulesText).length,
+  withoutImage: rows.filter((card) => !card.imageUrl).length,
+  withoutType: rows.filter((card) => card.type === 'ไม่ระบุ').length,
+  withoutRarity: rows.filter((card) => card.rarity === 'ไม่ระบุ').length,
+}));

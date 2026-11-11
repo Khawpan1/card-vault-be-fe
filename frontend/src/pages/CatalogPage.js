@@ -41,6 +41,5 @@ export default function CatalogPage() {
     {status === 'error' && <ErrorMessage message={error} onRetry={loadCards}/>}
     {status === 'success' && (cards.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">{cards.map((card) => <CardTile key={card.id} card={card}/>)}</div> : <Empty/>)}
     {status === 'success' && total > 24 && <nav aria-label="เปลี่ยนหน้ารายการการ์ด" className="mt-8 flex items-center justify-center gap-4"><button disabled={offset===0} onClick={() => setOffset(Math.max(0,offset-24))} className="rounded border border-white/20 px-4 py-2 disabled:opacity-30">ก่อนหน้า</button><span className="text-sm text-vault-cream/60">หน้า {Math.floor(offset/24)+1} / {Math.ceil(total/24)}</span><button disabled={offset+cards.length>=total} onClick={() => setOffset(offset+24)} className="rounded border border-white/20 px-4 py-2 disabled:opacity-30">ถัดไป</button></nav>}
-    <p className="mt-8 text-center text-xs text-vault-cream/40">ข้อมูลการ์ดจาก PokéWallet Cardfight!! Vanguard API</p>
   </main>;
 }

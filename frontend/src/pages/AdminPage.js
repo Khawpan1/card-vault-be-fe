@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { request } from '../api';
 import { ErrorMessage, Loading } from '../components/LoadState';
-import { cardImageUrl } from '../cardImage';
 
-const blankCard = { game: 'vanguard', sourceId: '', name: '', type: '', rarity: '', rulesText: '', imageUrl: '', sourceUrl: 'https://pokewallet.io/api-docs/cardfight-vanguard' };
+const blankCard = { game: 'vanguard', sourceId: '', name: '', type: '', rarity: '', rulesText: '', imageUrl: '', sourceUrl: 'https://openapi.tcgtracking.com/tcgapi/' };
 
 export default function AdminPage() {
   const [cards, setCards] = useState([]);
@@ -28,8 +27,7 @@ export default function AdminPage() {
   async function saveCard(event) {
     event.preventDefault(); setError(''); setNotice('');
     try {
-      const payload = { ...form, imageUrl: `https://api.pokewallet.io/cfv/images/${encodeURIComponent(form.sourceId)}` };
-      await request(editingId ? `/admin/cards/${editingId}` : '/admin/cards', { method: editingId ? 'PUT' : 'POST', body: JSON.stringify(payload) });
+      await request(editingId ? `/admin/cards/${editingId}` : '/admin/cards', { method: editingId ? 'PUT' : 'POST', body: JSON.stringify(form) });
       setForm(blankCard); setEditingId(null); setNotice('บันทึกข้อมูลการ์ดแล้ว'); await load();
     } catch (err) { setError(err.message); }
   }
@@ -59,8 +57,8 @@ export default function AdminPage() {
   return <main className="mx-auto max-w-7xl px-4 py-8"><p className="text-xs font-bold uppercase tracking-widest text-vault-orange">Admin area</p><h1 className="mt-2 text-3xl font-black">จัดการระบบ</h1>
     {status === 'loading' && <Loading/>}{status === 'error' && <ErrorMessage message={error} onRetry={load}/>}
     {status === 'success' && <>
-      <form onSubmit={saveCard} className="mt-7 rounded-xl border border-white/10 bg-white/[.04] p-5"><h2 className="text-xl font-bold">{editingId ? 'แก้ไขการ์ด' : 'เพิ่มการ์ด'}</h2><p className="mt-2 text-sm text-vault-cream/60">เกม: Cardfight!! Vanguard · รูปจะโหลดจาก PokéWallet โดยใช้รหัสต้นทาง</p><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {[['sourceId','รหัสต้นทางจาก PokéWallet'],['name','ชื่อการ์ด'],['type','ประเภท / ยูนิต'],['rarity','ความหายาก'],['sourceUrl','URL แหล่งข้อมูล']].map(([key,label]) => <input key={key} required value={form[key] || ''} onChange={(e) => setForm({ ...form, [key]: e.target.value })} placeholder={label} className="rounded border border-white/10 bg-white/[.05] p-2"/>)}
+      <form onSubmit={saveCard} className="mt-7 rounded-xl border border-white/10 bg-white/[.04] p-5"><h2 className="text-xl font-bold">{editingId ? 'แก้ไขการ์ด' : 'เพิ่มการ์ด'}</h2><p className="mt-2 text-sm text-vault-cream/60">Cardfight!! Vanguard</p><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {[['sourceId','รหัสต้นทาง'],['name','ชื่อการ์ด'],['type','ประเภท / ยูนิต'],['rarity','ความหายาก'],['sourceUrl','URL แหล่งข้อมูล'],['imageUrl','URL รูป (ถ้ามี)']].map(([key,label]) => <input key={key} aria-label={label} type={key.endsWith('Url') ? 'url' : 'text'} required={key !== 'imageUrl'} value={form[key] || ''} onChange={(e) => setForm({ ...form, [key]: e.target.value })} placeholder={label} className="rounded border border-white/10 bg-white/[.05] p-2"/>)}
         <textarea value={form.rulesText} onChange={(e) => setForm({ ...form, rulesText: e.target.value })} placeholder="ข้อความกติกา" className="rounded border border-white/10 bg-white/[.05] p-2 sm:col-span-2"/>
       </div><button className="mt-4 rounded bg-vault-gold px-4 py-2 font-bold text-vault-background">{editingId ? 'บันทึกการแก้ไข' : 'เพิ่มการ์ด'}</button>{editingId && <button type="button" onClick={() => { setEditingId(null); setForm(blankCard); }} className="ml-3 text-sm underline">ยกเลิก</button>}</form>
       <section className="mt-8"><h2 className="text-xl font-bold">การ์ดในคลัง ({totalCards})</h2><div className="mt-3 divide-y divide-white/10 rounded-xl border border-white/10">{cards.length ? cards.map((card) => <div key={card.id} className="flex flex-wrap items-center justify-between gap-3 p-3 text-sm"><span>{card.name} <span className="text-vault-cream/50">· {card.game} · {card.rarity}</span></span><span className="flex gap-3"><button onClick={() => editCard(card)} className="text-vault-gold underline">แก้ไข</button><button onClick={() => deleteCard(card.id)} className="text-red-300 underline">ลบ</button></span></div>) : <p className="p-4 text-sm text-vault-cream/60">ยังไม่มีการ์ดในคลัง</p>}</div>{totalCards>100 && <div className="mt-3 flex items-center justify-center gap-4"><button disabled={cardOffset===0} onClick={() => setCardOffset(Math.max(0,cardOffset-100))} className="rounded border border-white/20 px-3 py-1 disabled:opacity-30">ก่อนหน้า</button><span className="text-sm text-vault-cream/60">หน้า {Math.floor(cardOffset/100)+1} / {Math.ceil(totalCards/100)}</span><button disabled={cardOffset+cards.length>=totalCards} onClick={() => setCardOffset(cardOffset+100)} className="rounded border border-white/20 px-3 py-1 disabled:opacity-30">ถัดไป</button></div>}</section>

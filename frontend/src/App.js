@@ -41,7 +41,6 @@ function HomePage() {
       <h1 className="mt-5 max-w-3xl text-4xl font-black leading-tight sm:text-6xl">เปิดคลังการ์ด<br/><span className="text-vault-orange">แล้วจัดเด็คของคุณ</span></h1>
       <p className="mt-5 max-w-xl leading-7 text-white/70">ค้นหาการ์ด Vanguard ดูรายละเอียด และเลือกการ์ดจากภาพเพื่อสร้างเด็คของคุณ</p>
       <div className="mt-8 flex flex-wrap gap-3"><Link to="/cards" className="rounded-xl bg-vault-orange px-5 py-3 font-bold text-white hover:bg-[#ff853f]">เปิดคลังการ์ด <span aria-hidden="true">→</span></Link><Link to="/decks" className="rounded-xl border border-white/25 px-5 py-3 font-bold text-white hover:bg-white/10">ดูเด็คสาธารณะ</Link></div>
-      <p className="mt-10 text-xs text-white/45">ข้อมูลการ์ดจาก <a href="https://pokewallet.io/api-docs/cardfight-vanguard" target="_blank" rel="noreferrer" className="underline">PokéWallet Vanguard API</a></p>
     </section>
   </main>;
 }
@@ -62,5 +61,5 @@ export default function App() {
       <Route path="/admin" element={<ProtectedRoute admin/>}><Route index element={<AdminPage/>}/></Route>
     </Route>
     <Route path="*" element={<main className="p-12 text-center">ไม่พบหน้าที่ต้องการ</main>}/>
-  </Routes><footer className="mt-16 border-t border-zinc-800 bg-zinc-950 px-4 py-6 text-center text-xs text-white/60">Card data and images powered by PokéWallet Cardfight!! Vanguard API</footer></div></BrowserRouter></AuthProvider>;
+  </Routes><footer className="mt-16 border-t border-zinc-800 bg-zinc-950 px-4 py-6 text-center text-xs text-white/60">ข้อมูลและรูปการ์ดจาก <a href="https://openapi.tcgtracking.com/tcgapi/" target="_blank" rel="noreferrer" className="underline">Open TCG API (TCGTracking)</a> · การ์ดเดิมจาก PokéWallet</footer></div></BrowserRouter></AuthProvider>;
 }
