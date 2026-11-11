@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { request } from '../api';
 import { cardImageUrl, handleCardImageError } from '../cardImage';
 import CardFilters from './CardFilters';
@@ -23,7 +23,7 @@ export default function DeckEditor({ deck, onClose, onSaved }) {
   const [retrySearch, setRetrySearch] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
-  const savedDeckId = useRef(deck?.id);
+  const [savedDeckId, setSavedDeckId] = useState(deck?.id);
   const overLimit = cards.some((card) => card.quantity > maxCopies);
   const editingDisabled = deckLoading || Boolean(deckLoadError) || saving;
 
@@ -79,17 +79,19 @@ export default function DeckEditor({ deck, onClose, onSaved }) {
     if (editingDisabled || overLimit) return;
     setSaving(true);
     setSaveError('');
+    let deckId = savedDeckId;
     try {
-      if (savedDeckId.current) {
-        await request(`/decks/${savedDeckId.current}`, { method: 'PUT', body: JSON.stringify(form) });
+      if (deckId) {
+        await request(`/decks/${deckId}`, { method: 'PUT', body: JSON.stringify(form) });
       } else {
         const data = await request('/decks', {
           method: 'POST',
           body: JSON.stringify({ ...form, game: 'vanguard' }),
         });
-        savedDeckId.current = data.deck.id;
+        deckId = data.deck.id;
+        setSavedDeckId(deckId);
       }
-      await request(`/decks/${savedDeckId.current}/cards`, {
+      await request(`/decks/${deckId}/cards`, {
         method: 'PUT',
         body: JSON.stringify({ cards: cards.map(({ id, quantity }) => ({ cardId: id, quantity })) }),
       });

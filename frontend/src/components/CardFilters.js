@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { request } from '../api';
 
 const fieldClass = 'min-w-0 w-full rounded-xl border border-vault-control bg-vault-surface px-4 py-3 font-normal disabled:opacity-60';
@@ -7,18 +7,20 @@ export default function CardFilters({ filters, onChange }) {
   const [options, setOptions] = useState({ sets: [], rarities: [] });
   const [status, setStatus] = useState('loading');
 
-  const loadOptions = useCallback(async () => {
-    setStatus('loading');
-    try {
-      const data = await request('/cards/filters');
-      setOptions({ sets: data.sets || [], rarities: data.rarities || [] });
-      setStatus('success');
-    } catch {
-      setStatus('error');
-    }
-  }, []);
+  const [retry, setRetry] = useState(0);
 
-  useEffect(() => { loadOptions(); }, [loadOptions]);
+  useEffect(() => {
+    let active = true;
+    setStatus('loading');
+    request('/cards/filters')
+      .then((data) => {
+        if (!active) return;
+        setOptions({ sets: data.sets || [], rarities: data.rarities || [] });
+        setStatus('success');
+      })
+      .catch(() => { if (active) setStatus('error'); });
+    return () => { active = false; };
+  }, [retry]);
 
   return <>
     <div className="grid gap-3 md:grid-cols-3">
@@ -46,7 +48,7 @@ export default function CardFilters({ filters, onChange }) {
     </div>
     {status === 'error' && <p role="alert" className="mt-3 text-sm text-red-700">
       โหลดตัวเลือกชุดการ์ดและความหายากไม่สำเร็จ
-      <button type="button" onClick={loadOptions} className="ml-2 underline">โหลดตัวกรองอีกครั้ง</button>
+      <button type="button" onClick={() => setRetry(retry + 1)} className="ml-2 underline">โหลดตัวกรองอีกครั้ง</button>
     </p>}
   </>;
 }

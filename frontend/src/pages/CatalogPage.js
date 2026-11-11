@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { request } from '../api';
 import CardTile from '../components/CardTile';
 import CardFilters from '../components/CardFilters';
@@ -12,26 +12,32 @@ export default function CatalogPage() {
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
   const [offset, setOffset] = useState(0);
-  const latestRequest = useRef(0);
+  const [retry, setRetry] = useState(0);
 
-  const loadCards = useCallback(async () => {
+  useEffect(() => {
+    let active = true;
     const query = new URLSearchParams({ game: 'vanguard', limit: '24', offset: String(offset) });
     for (const [key, value] of Object.entries(filters)) {
       if (value) query.set(key, value);
     }
-    const requestId = ++latestRequest.current;
-    setStatus('loading'); setError('');
-    try {
-      const data = await request(`/cards?${query.toString()}`);
-      if (requestId !== latestRequest.current) return;
-      setCards(data.items || []); setTotal(data.total || 0); setStatus('success');
-    } catch (err) {
-      if (requestId !== latestRequest.current) return;
-      setError(err.message); setStatus('error');
-    }
-  }, [filters, offset]);
+    setStatus('loading');
+    setError('');
+    request('/cards?' + query.toString())
+      .then((data) => {
+        if (!active) return;
+        setCards(data.items || []);
+        setTotal(data.total || 0);
+        setStatus('success');
+      })
+      .catch((err) => {
+        if (!active) return;
+        setError(err.message);
+        setStatus('error');
+      });
+    // ใช้ผลจากคำขอล่าสุดเมื่อเปลี่ยนตัวกรองหรือเปลี่ยนหน้า
+    return () => { active = false; };
+  }, [filters, offset, retry]);
 
-  useEffect(() => { loadCards(); }, [loadCards]);
   function update(field, value) { setOffset(0); setFilters((current) => ({ ...current, [field]: value })); }
 
   return <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
@@ -40,7 +46,7 @@ export default function CatalogPage() {
       <CardFilters filters={filters} onChange={update}/>
     </section>
     {status === 'loading' && <Loading/>}
-    {status === 'error' && <ErrorMessage message={error} onRetry={loadCards}/>}
+    {status === 'error' && <ErrorMessage message={error} onRetry={() => setRetry(retry + 1)}/>}
     {status === 'success' && (cards.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">{cards.map((card) => <CardTile key={card.id} card={card}/>)}</div> : <Empty/>)}
     {status === 'success' && <CardPagination total={total} offset={offset} pageSize={24} onChange={setOffset}/>}
   </main>;
