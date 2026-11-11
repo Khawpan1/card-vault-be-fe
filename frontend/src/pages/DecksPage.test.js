@@ -4,9 +4,6 @@ import { request } from '../api';
 import DecksPage from './DecksPage';
 
 jest.mock('../api', () => ({ request: jest.fn() }));
-jest.mock('../auth/AuthContext', () => ({
-  useAuth: () => ({ member: { id: 7, role: 'member' } })
-}));
 
 afterEach(() => jest.clearAllMocks());
 

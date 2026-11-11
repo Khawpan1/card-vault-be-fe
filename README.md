@@ -2,13 +2,16 @@
 
 เว็บคลังการ์ดและจัดเด็คสำหรับ **Cardfight!! Vanguard** เกมเดียว สมาชิกค้นหาการ์ดจากรูป สร้างและแก้ไขเด็ค เก็บคอลเลกชัน และเผยแพร่เด็คสาธารณะได้
 
+- [เว็บจริงบน Vercel](https://frontend-wheat-kappa-70.vercel.app/cards)
+- [สถานะ Go API บน Render](https://card-vault-be-fe.onrender.com/api/health)
+
 ## โครงสร้าง
 
 - `frontend/` React, Tailwind CSS, React Router และ Fetch API
 - `backend/` Go API แบ่ง `cmd/server/`, `handler/`, `store/`, `mw/` และ `auth/`
 - `database/` PostgreSQL schema, migrations, API contract และ seed script
 
-หน้า React ใช้ Fetch เรียก Go API เพื่อค้นหาและกรองการ์ดใน PostgreSQL
+หน้า React ใช้ Fetch เรียก Go API เพื่อค้นหาการ์ดตามชื่อ และเลือกชุดการ์ดหรือความหายากจากรายการที่อ่านจาก PostgreSQL
 
 ## แหล่งข้อมูลและรูป
 
@@ -16,19 +19,16 @@
 
 สคริปต์ใช้รหัสรายการของ TCGTracking เพื่อรวมรายการซ้ำและอัปเดตแถวเดิมเมื่อรัน seed ซ้ำ การ์ดที่ไม่มีประเภทหรือความหายากแสดงว่า “ไม่ระบุ” ส่วนข้อความเอฟเฟกต์เว้นว่างตามข้อมูลต้นทาง รูปการ์ดเก็บเป็น URL ในฐานข้อมูล
 
-สคริปต์เก็บผลของเซ็ตที่อ่านแล้วใน `database/.make-seed-progress/open-tcg/` เพื่อรันต่อได้ เพิ่ม `--refresh` เพื่อดึงข้อมูลล่าสุดทุกเซ็ต
-
+สคริปต์เก็บผลของเซ็ตที่อ่านแล้วใน `database/.make-seed-progress/open-tcg/` เพื่อรันต่อได้ ใช้ `node database/make-seed.mjs --refresh` เพื่อดึงข้อมูลล่าสุดทุกเซ็ต
 
 ## รันในเครื่อง (PowerShell)
 
 1. สร้างฐานข้อมูล PostgreSQL และรัน `database/schema.sql` สำหรับฐานข้อมูลใหม่
-2. สร้าง seed และนำเข้า PostgreSQL:
+2. นำเข้าไฟล์ seed ที่อยู่ใน repo หากต้องการดึงข้อมูลจากต้นทางใหม่ ให้รันคำสั่ง `node database/make-seed.mjs --refresh` ก่อนนำเข้า
 
    ```powershell
-   node database/make-seed.mjs
    psql -h localhost -U postgres -d cardvault -v ON_ERROR_STOP=1 -f database/seed.sql
    ```
-
 
 3. ตั้งค่าและรัน Backend:
 
@@ -45,7 +45,7 @@
    ```powershell
    cd frontend
    Copy-Item .env.example .env.local
-   npm install
+   npm ci
    npm start
    ```
 
@@ -57,12 +57,11 @@
 
    จากนั้นออกจากระบบและเข้าสู่ระบบใหม่เพื่อรับ token ที่มี role ล่าสุด
 
-## ฐานข้อมูลเดิมที่มีหลายเกม
+## ย้ายฐานข้อมูลรุ่นหลายเกม
 
-หากฐานข้อมูลเดิมยังไม่ได้ย้ายมาเป็น Vanguard ให้สำรองข้อมูลแล้วรัน `database/migrations/003_vanguard_only.sql` หนึ่งครั้ง จากนั้นใช้ `psql` เชื่อมต่อ Supabase ผ่าน Session pooler และรันไฟล์ `database/seed.sql` ด้วย `-v ON_ERROR_STOP=1` ใช้ `schema.sql` สำหรับฐานข้อมูลใหม่
+สำหรับฐานข้อมูลรุ่นหลายเกม ให้สำรองข้อมูลแล้วรัน `database/migrations/003_vanguard_only.sql` หนึ่งครั้ง จากนั้นใช้ `psql` เชื่อมต่อ Supabase ผ่าน Session pooler และรันไฟล์ `database/seed.sql` ด้วย `-v ON_ERROR_STOP=1` ใช้ `schema.sql` สำหรับฐานข้อมูลใหม่
 
 Seed เก็บการ์ดที่เด็คและคอลเลกชันเดิมอ้างถึงไว้ การ์ดเดิมอาจมีชื่อเดียวกับรายการจาก Open TCG เพราะแต่ละแหล่งใช้รหัสต่างกัน
-
 
 ## Environment variables
 
@@ -87,6 +86,6 @@ Seed เก็บการ์ดที่เด็คและคอลเลก
 - [x] สร้าง/แก้ไข/ลบเด็ค, เลือกการ์ดด้วยรูป, คอลเลกชัน และเด็คสาธารณะ
 - [x] สร้าง seed จากข้อมูล Vanguard ทุกเซ็ตใน Open TCG API
 - [x] ตรวจการนำเข้าบน Supabase ครบ 26,492 รายการจาก Open TCG และทดสอบค้นหา รายละเอียด และรูปผ่าน Render
-- [x] Build และ deploy เว็บ Vanguard บน Vercel และ Render แล้ว
-- [x] React Unit Test ผ่าน 4 รายการ
+- [x] Deploy เว็บธีมสว่างบน Vercel และ Go API บน Render แล้ว
+- [x] React Unit Test ผ่าน 5 รายการ รวมการเลือกชุดและความหายาก
 - [ ] ทบทวนการสาธิตด้วยบัญชีจริงของทีม

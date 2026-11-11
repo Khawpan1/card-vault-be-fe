@@ -47,7 +47,7 @@ export default function CatalogPage() {
   function update(field, value) { setOffset(0); setFilters((current) => ({ ...current, [field]: value })); }
 
   return <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-    <div className="mb-8"><p className="text-xs font-bold uppercase tracking-[.18em] text-vault-teal">Cardfight!! Vanguard</p><h1 className="mt-2 text-3xl font-black sm:text-4xl">คลังการ์ด Vanguard</h1><p className="mt-2 text-sm text-vault-muted">ค้นหาและกรองข้อมูลที่จัดเก็บในฐานข้อมูลของเรา · {total.toLocaleString()} ใบ</p></div>
+    <div className="mb-8"><p className="text-xs font-bold uppercase tracking-[.18em] text-vault-teal">Cardfight!! Vanguard</p><h1 className="mt-2 text-3xl font-black sm:text-4xl">คลังการ์ด Vanguard</h1><p className="mt-2 text-sm text-vault-muted">ค้นหาตามชื่อ ชุดการ์ด หรือความหายาก · {total.toLocaleString()} ใบ</p></div>
     <section aria-label="ตัวกรองการ์ด" className="mb-8 rounded-2xl border border-vault-line bg-vault-surface p-4 shadow-sm">
       <div className="grid gap-3 md:grid-cols-3">
         <label className="grid min-w-0 gap-2 text-sm font-semibold">

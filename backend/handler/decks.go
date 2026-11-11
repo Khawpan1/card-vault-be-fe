@@ -22,7 +22,7 @@ func (a *API) listPublicDecks(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusBadRequest, "invalid_filter", "คำค้นต้องไม่เกิน 100 ตัวอักษร")
 		return
 	}
-	items, err := a.db.ListPublicDecks(r.Context(), "vanguard", q)
+	items, err := a.db.ListPublicDecks(r.Context(), q)
 	if err != nil {
 		WriteError(w, http.StatusInternalServerError, "server_error", "อ่านเด็คสาธารณะไม่สำเร็จ")
 		return

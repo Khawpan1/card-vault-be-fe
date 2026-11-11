@@ -13,7 +13,7 @@ func (a *API) listCollection(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusBadRequest, "invalid_game", "เกมไม่ถูกต้อง")
 		return
 	}
-	items, err := a.db.ListCollection(r.Context(), mw.Current(r).MemberID, "vanguard")
+	items, err := a.db.ListCollection(r.Context(), mw.Current(r).MemberID)
 	if err != nil {
 		WriteError(w, http.StatusInternalServerError, "server_error", "อ่านคอลเลกชันไม่สำเร็จ")
 		return
@@ -35,7 +35,7 @@ func (a *API) setCollectionQuantity(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err := a.db.SetCollectionQuantity(r.Context(), mw.Current(r).MemberID, cardID, input.Quantity)
-	if store.IsCardMissing(err) {
+	if store.IsMissing(err) {
 		WriteError(w, http.StatusNotFound, "not_found", "ไม่พบการ์ดนี้")
 		return
 	}

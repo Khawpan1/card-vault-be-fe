@@ -3,8 +3,6 @@ package store
 import (
 	"context"
 	"time"
-
-	"github.com/jackc/pgx/v5"
 )
 
 type CollectionCard struct {
@@ -24,7 +22,7 @@ type DeckReviewInfo struct {
 	IsPublic bool
 }
 
-func (s *Store) ListCollection(ctx context.Context, memberID int64, game string) ([]CollectionCard, error) {
+func (s *Store) ListCollection(ctx context.Context, memberID int64) ([]CollectionCard, error) {
 	rows, err := s.Pool.Query(ctx, `SELECT c.id,c.game,c.source_id,c.name,c.type,c.rarity,c.rules_text,c.image_url,c.set_name,c.set_code,c.source_url,cc.quantity FROM collection_cards cc JOIN cards c ON c.id=cc.card_id WHERE cc.member_id=$1 AND c.game='vanguard' ORDER BY lower(c.name)`, memberID)
 	if err != nil {
 		return nil, err
@@ -105,5 +103,3 @@ func (s *Store) DeleteReview(ctx context.Context, id int64) (int64, error) {
 	result, err := s.Pool.Exec(ctx, `DELETE FROM reviews r USING decks d WHERE r.id=$1 AND r.deck_id=d.id AND d.game='vanguard'`, id)
 	return result.RowsAffected(), err
 }
-
-func IsCardMissing(err error) bool { return err == pgx.ErrNoRows }

@@ -29,7 +29,7 @@ type DeckCard struct {
 	Quantity int `json:"quantity"`
 }
 
-func (s *Store) ListPublicDecks(ctx context.Context, game, query string) ([]Deck, error) {
+func (s *Store) ListPublicDecks(ctx context.Context, query string) ([]Deck, error) {
 	rows, err := s.Pool.Query(ctx, `SELECT d.id,d.game,d.name,d.description,d.is_public,m.display_name FROM decks d JOIN members m ON m.id=d.member_id WHERE d.is_public AND d.game='vanguard' AND ($1='' OR d.name ILIKE '%'||$1||'%') ORDER BY d.updated_at DESC LIMIT 100`, query)
 	if err != nil {
 		return nil, err

@@ -21,7 +21,7 @@ type Repository interface {
 	UpdateMemberRole(context.Context, int64, string) (Member, error)
 	DeleteMember(context.Context, int64) (int64, error)
 
-	ListPublicDecks(context.Context, string, string) ([]Deck, error)
+	ListPublicDecks(context.Context, string) ([]Deck, error)
 	ListMemberDecks(context.Context, int64) ([]Deck, error)
 	DeckByID(context.Context, int64) (Deck, error)
 	CreateDeck(context.Context, int64, string, string, string, bool) (Deck, error)
@@ -31,7 +31,7 @@ type Repository interface {
 	ListAdminDecks(context.Context) ([]Deck, error)
 	DeleteDeck(context.Context, int64) (int64, error)
 
-	ListCollection(context.Context, int64, string) ([]CollectionCard, error)
+	ListCollection(context.Context, int64) ([]CollectionCard, error)
 	SetCollectionQuantity(context.Context, int64, int64, int) error
 	DeleteCollectionCard(context.Context, int64, int64) (int64, error)
 	ReviewInfo(context.Context, int64) (DeckReviewInfo, error)

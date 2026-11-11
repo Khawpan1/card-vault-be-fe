@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { request } from '../api';
-import { cardImageUrl, handleCardImageError } from '../cardImage';
+import { cardImageUrl } from '../cardImage';
 import { Empty, ErrorMessage, Loading } from '../components/LoadState';
 
 export default function CollectionPage() {

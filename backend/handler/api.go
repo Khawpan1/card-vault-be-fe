@@ -31,15 +31,11 @@ type cachedImage struct {
 	expiresAt   time.Time
 }
 
-func New(db store.Repository, secret []byte, frontendOrigin string, apiKey ...string) *API {
+func New(db store.Repository, secret []byte, frontendOrigin, pokewalletKey string) *API {
 	if frontendOrigin == "" {
 		frontendOrigin = "http://localhost:3000"
 	}
-	key := ""
-	if len(apiKey) > 0 {
-		key = apiKey[0]
-	}
-	return &API{db: db, secret: secret, frontendOrigin: frontendOrigin, pokewalletKey: key, imageCache: make(map[string]cachedImage)}
+	return &API{db: db, secret: secret, frontendOrigin: frontendOrigin, pokewalletKey: pokewalletKey, imageCache: make(map[string]cachedImage)}
 }
 
 func (a *API) Routes() http.Handler {

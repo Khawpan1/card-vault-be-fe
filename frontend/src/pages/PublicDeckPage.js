@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { request } from '../api';
 import { useAuth } from '../auth/AuthContext';
 import { Empty, ErrorMessage, Loading } from '../components/LoadState';
-import { cardImageUrl, handleCardImageError } from '../cardImage';
+import { cardImageUrl } from '../cardImage';
 
 export default function PublicDeckPage() {
   const { deckId } = useParams();
