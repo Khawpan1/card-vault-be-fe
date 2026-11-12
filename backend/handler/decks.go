@@ -206,10 +206,14 @@ func (a *API) adminDeleteDeck(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) adminListDecks(w http.ResponseWriter, r *http.Request) {
-	items, err := a.db.ListAdminDecks(r.Context())
+	limit, offset, ok := adminPage(w, r)
+	if !ok {
+		return
+	}
+	items, total, err := a.db.ListAdminDecks(r.Context(), limit, offset)
 	if err != nil {
 		WriteError(w, http.StatusInternalServerError, "server_error", "อ่านเด็คไม่สำเร็จ")
 		return
 	}
-	WriteJSON(w, http.StatusOK, map[string]any{"items": items, "total": len(items), "limit": 500, "offset": 0})
+	WriteJSON(w, http.StatusOK, map[string]any{"items": items, "total": total, "limit": limit, "offset": offset})
 }

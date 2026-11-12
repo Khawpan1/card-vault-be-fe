@@ -13,7 +13,9 @@ export async function request(path, options = {}) {
   });
   const body = response.status === 204 ? null : await response.json();
   if (!response.ok) {
-    throw new Error(body?.error?.message || 'เกิดข้อผิดพลาด กรุณาลองอีกครั้ง');
+    const error = new Error(body?.error?.message || 'เกิดข้อผิดพลาด กรุณาลองอีกครั้ง');
+    error.status = response.status;
+    throw error;
   }
   return body;
 }

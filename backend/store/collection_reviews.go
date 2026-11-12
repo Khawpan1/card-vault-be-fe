@@ -82,21 +82,27 @@ func (s *Store) SaveReview(ctx context.Context, deckID, memberID int64, content 
 	return err
 }
 
-func (s *Store) ListAdminReviews(ctx context.Context) ([]Review, error) {
-	rows, err := s.Pool.Query(ctx, `SELECT r.id,r.deck_id,r.content,r.created_at,m.display_name,d.name FROM reviews r JOIN members m ON m.id=r.member_id JOIN decks d ON d.id=r.deck_id WHERE d.game='vanguard' ORDER BY r.created_at DESC LIMIT 500`)
+func (s *Store) ListAdminReviews(ctx context.Context, limit, offset int) ([]Review, int, error) {
+	const where = ` FROM reviews r JOIN members m ON m.id=r.member_id JOIN decks d ON d.id=r.deck_id WHERE d.game='vanguard'`
+	var total int
+	if err := s.Pool.QueryRow(ctx, `SELECT count(*)`+where).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	rows, err := s.Pool.Query(ctx, `SELECT r.id,r.deck_id,r.content,r.created_at,m.display_name,d.name`+where+
+		` ORDER BY r.created_at DESC,r.id DESC LIMIT $1 OFFSET $2`, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 	items := make([]Review, 0)
 	for rows.Next() {
 		var item Review
 		if err := rows.Scan(&item.ID, &item.DeckID, &item.Content, &item.CreatedAt, &item.MemberName, &item.DeckName); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		items = append(items, item)
 	}
-	return items, rows.Err()
+	return items, total, rows.Err()
 }
 
 func (s *Store) DeleteReview(ctx context.Context, id int64) (int64, error) {

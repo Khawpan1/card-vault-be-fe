@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { request } from '../api';
+import { clearDeckDraft, saveDeckDraft } from '../deckDraft';
 import { cardImageUrl, handleCardImageError } from '../cardImage';
 import CardFilters from './CardFilters';
 import CardPagination from './CardPagination';
@@ -8,14 +10,15 @@ import { Empty, ErrorMessage, Loading } from './LoadState';
 const pageSize = 8;
 const maxCopies = 4;
 
-export default function DeckEditor({ deck, onClose, onSaved }) {
-  const [form, setForm] = useState({
+export default function DeckEditor({ deck, draft, memberId, onSessionExpired, onClose, onSaved }) {
+  const navigate = useNavigate();
+  const [form, setForm] = useState(draft?.form || {
     name: deck?.name || '',
     description: deck?.description || '',
     isPublic: deck?.isPublic || false,
   });
-  const [cards, setCards] = useState(deck?.cards || []);
-  const [deckLoading, setDeckLoading] = useState(Boolean(deck?.id));
+  const [cards, setCards] = useState(draft?.cards || deck?.cards || []);
+  const [deckLoading, setDeckLoading] = useState(Boolean(deck?.id && !draft));
   const [deckLoadError, setDeckLoadError] = useState('');
   const [filters, setFilters] = useState({ q: '', setName: '', rarityExact: '' });
   const [offset, setOffset] = useState(0);
@@ -23,19 +26,27 @@ export default function DeckEditor({ deck, onClose, onSaved }) {
   const [retrySearch, setRetrySearch] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
-  const [savedDeckId, setSavedDeckId] = useState(deck?.id);
+  const [savedDeckId, setSavedDeckId] = useState(draft?.savedDeckId || deck?.id);
+  const [dirty, setDirty] = useState(false);
+  const [draftStored, setDraftStored] = useState(Boolean(draft));
   const overLimit = cards.some((card) => card.quantity > maxCopies);
   const editingDisabled = deckLoading || Boolean(deckLoadError) || saving;
 
   useEffect(() => {
-    if (!deck?.id) return;
+    if (!deck?.id || draft) return;
     let active = true;
     request(`/decks/${deck.id}`)
       .then((data) => { if (active) setCards(data.deck.cards || []); })
       .catch((error) => { if (active) setDeckLoadError(error.message); })
       .finally(() => { if (active) setDeckLoading(false); });
     return () => { active = false; };
-  }, [deck?.id]);
+  }, [deck?.id, draft]);
+
+  useEffect(() => {
+    if (!dirty) return;
+    // เก็บร่างในเบราว์เซอร์ของบัญชีนี้ก่อนส่งไปบันทึก
+    setDraftStored(saveDeckDraft(memberId, { deck: deck || {}, form, cards, savedDeckId }));
+  }, [dirty, memberId, deck, form, cards, savedDeckId]);
 
   useEffect(() => {
     let active = true;
@@ -60,6 +71,7 @@ export default function DeckEditor({ deck, onClose, onSaved }) {
   }
 
   function addCard(card) {
+    setDirty(true);
     setCards((current) => {
       const existing = current.find((item) => item.id === card.id);
       if (!existing) return [...current, { ...card, quantity: 1 }];
@@ -69,9 +81,20 @@ export default function DeckEditor({ deck, onClose, onSaved }) {
   }
 
   function decreaseCard(cardId) {
+    setDirty(true);
     setCards((current) => current
       .map((item) => item.id === cardId ? { ...item, quantity: item.quantity - 1 } : item)
       .filter((item) => item.quantity > 0));
+  }
+
+  function updateForm(field, value) {
+    setDirty(true);
+    setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function removeCard(cardId) {
+    setDirty(true);
+    setCards((current) => current.filter((item) => item.id !== cardId));
   }
 
   async function save(event) {
@@ -95,10 +118,17 @@ export default function DeckEditor({ deck, onClose, onSaved }) {
         method: 'PUT',
         body: JSON.stringify({ cards: cards.map(({ id, quantity }) => ({ cardId: id, quantity })) }),
       });
+      if (draftStored) clearDeckDraft(memberId);
       onSaved();
       onClose();
     } catch (error) {
-      setSaveError(error.message);
+      if (error.status === 401 && onSessionExpired &&
+          saveDeckDraft(memberId, { deck: deck || {}, form, cards, savedDeckId: deckId })) {
+        onSessionExpired();
+        navigate('/login', { replace: true, state: { deckSessionExpired: true } });
+      } else {
+        setSaveError(error.message);
+      }
     } finally {
       setSaving(false);
     }
@@ -114,18 +144,19 @@ export default function DeckEditor({ deck, onClose, onSaved }) {
     </div>
     <label className="mt-5 block text-sm font-semibold">
       ชื่อเด็ค
-      <input required maxLength="100" value={form.name}
-        onChange={(event) => setForm({ ...form, name: event.target.value })}
+      <input required maxLength="100" value={form.name} disabled={editingDisabled}
+        onChange={(event) => updateForm('name', event.target.value)}
         className="mt-2 w-full rounded-xl border border-vault-line bg-vault-inset px-3 py-2.5 font-normal"/>
     </label>
     <label className="mt-4 block text-sm font-semibold">
       คำอธิบาย
-      <textarea maxLength="1000" value={form.description}
-        onChange={(event) => setForm({ ...form, description: event.target.value })}
+      <textarea maxLength="1000" value={form.description} disabled={editingDisabled}
+        onChange={(event) => updateForm('description', event.target.value)}
         className="mt-2 min-h-24 w-full rounded-xl border border-vault-line bg-vault-inset px-3 py-2.5 font-normal"/>
     </label>
     <label className="mt-3 flex items-center gap-2 text-sm">
-      <input type="checkbox" checked={form.isPublic} onChange={(event) => setForm({ ...form, isPublic: event.target.checked })}/>
+      <input type="checkbox" checked={form.isPublic} disabled={editingDisabled}
+        onChange={(event) => updateForm('isPublic', event.target.checked)}/>
       เผยแพร่เป็นเด็คสาธารณะ
     </label>
 
@@ -173,7 +204,7 @@ export default function DeckEditor({ deck, onClose, onSaved }) {
               <span className={card.quantity > maxCopies ? 'font-bold text-red-700' : ''}>{card.quantity} ใบ</span>
               <button type="button" aria-label={`เพิ่ม ${card.name}`} onClick={() => addCard(card)}
                 disabled={editingDisabled || card.quantity >= maxCopies} className="disabled:opacity-40">+</button>
-              <button type="button" onClick={() => setCards((current) => current.filter((item) => item.id !== card.id))}
+              <button type="button" onClick={() => removeCard(card.id)}
                 disabled={editingDisabled} className="text-red-700">นำออก</button>
             </div>
           </div>
@@ -181,6 +212,7 @@ export default function DeckEditor({ deck, onClose, onSaved }) {
       </ul> : !deckLoading && !deckLoadError && <p className="mt-3 text-sm text-vault-muted">ยังไม่มีการ์ดในเด็ค</p>}
     </section>
 
+    {draftStored && <p className="mt-3 text-sm text-vault-muted">เก็บร่างไว้ในเบราว์เซอร์นี้แล้ว</p>}
     {saveError && <p role="alert" className="mt-3 text-sm text-red-700">{saveError}</p>}
     <button disabled={editingDisabled || overLimit}
       className="mt-5 rounded-xl bg-vault-orange px-5 py-3 font-bold text-white hover:bg-vault-orange-hover disabled:opacity-50">

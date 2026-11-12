@@ -45,7 +45,14 @@ func (a *API) listCards(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Handler ตรวจ input ก่อนส่งเงื่อนไขค้นไปยัง Store
-	filters := store.CardSearch{Query: q, Type: cardType, Rarity: rarity, SetName: setName, RarityExact: rarityExact}
+	filters := store.CardSearch{
+		Query: q, Type: cardType, Rarity: rarity, SetName: setName, RarityExact: rarityExact,
+		Grade: trim(query.Get("grade")), Nation: trim(query.Get("nation")), Clan: trim(query.Get("clan")), Unit: trim(query.Get("unit")),
+	}
+	if !validCardAttributes(filters.Grade, filters.Nation, filters.Clan, filters.Unit) {
+		WriteError(w, http.StatusBadRequest, "invalid_filter", "ตัวกรองเกรด เนชั่น แคลน หรือยูนิทไม่ถูกต้อง")
+		return
+	}
 	items, total, err := a.db.SearchCards(r.Context(), filters, limit, offset)
 	if err != nil {
 		WriteError(w, http.StatusInternalServerError, "server_error", "อ่านคลังการ์ดไม่สำเร็จ")
@@ -239,12 +246,18 @@ func (a *API) deleteCard(w http.ResponseWriter, r *http.Request) {
 }
 
 func validCard(c card) bool {
-	if c.Game != "vanguard" {
+	if c.Game != "vanguard" || !validCardAttributes(trim(c.Grade), trim(c.Nation), trim(c.Clan), trim(c.Unit)) {
 		return false
 	}
 	setNameOK := c.SetName == nil || len(*c.SetName) <= 255
 	setCodeOK := c.SetCode == nil || len(*c.SetCode) <= 50
 	return len(trim(c.SourceID)) > 0 && len(trim(c.SourceID)) <= 150 && len(trim(c.Name)) > 0 && len(trim(c.Name)) <= 255 && len(trim(c.Type)) > 0 && len(trim(c.Type)) <= 255 && len(trim(c.Rarity)) > 0 && len(trim(c.Rarity)) <= 100 && len(c.RulesText) <= 20000 && setNameOK && setCodeOK && (c.ImageURL == "" || secureURL(c.ImageURL)) && secureURL(c.SourceURL)
+}
+
+func validCardAttributes(grade, nation, clan, unit string) bool {
+	_, gradeOK := parseBound(grade, 0, 0, 99)
+	return gradeOK && len(grade) <= 20 && utf8.RuneCountInString(nation) <= 150 &&
+		utf8.RuneCountInString(clan) <= 150 && utf8.RuneCountInString(unit) <= 150
 }
 
 func secureURL(raw string) bool {
@@ -261,6 +274,14 @@ func cleanCard(c card) card {
 	c.Name = trim(c.Name)
 	c.Type = trim(c.Type)
 	c.Rarity = trim(c.Rarity)
+	c.Grade = trim(c.Grade)
+	nations := strings.Split(c.Nation, "/")
+	for index, nation := range nations {
+		nations[index] = trim(nation)
+	}
+	c.Nation = strings.Join(nations, "/")
+	c.Clan = trim(c.Clan)
+	c.Unit = trim(c.Unit)
 	c.RulesText = trim(c.RulesText)
 	c.ImageURL = trim(c.ImageURL)
 	c.SourceURL = trim(c.SourceURL)

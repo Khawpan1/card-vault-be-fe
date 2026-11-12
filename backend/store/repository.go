@@ -17,7 +17,7 @@ type Repository interface {
 	UpdateDisplayName(context.Context, int64, string) (Member, error)
 	PasswordHash(context.Context, int64) (string, error)
 	UpdatePasswordHash(context.Context, int64, string) error
-	ListMembers(context.Context) ([]Member, error)
+	ListMembers(context.Context, int, int) ([]Member, int, error)
 	UpdateMemberRole(context.Context, int64, string) (Member, error)
 	DeleteMember(context.Context, int64) (int64, error)
 
@@ -28,7 +28,7 @@ type Repository interface {
 	UpdateMemberDeck(context.Context, int64, int64, string, string, bool) (int64, error)
 	DeleteMemberDeck(context.Context, int64, int64) (int64, error)
 	ReplaceDeckCards(context.Context, int64, int64, []DeckCard) error
-	ListAdminDecks(context.Context) ([]Deck, error)
+	ListAdminDecks(context.Context, int, int) ([]Deck, int, error)
 	DeleteDeck(context.Context, int64) (int64, error)
 
 	ListCollection(context.Context, int64) ([]CollectionCard, error)
@@ -37,6 +37,6 @@ type Repository interface {
 	ReviewInfo(context.Context, int64) (DeckReviewInfo, error)
 	ListReviews(context.Context, int64) ([]Review, error)
 	SaveReview(context.Context, int64, int64, string) error
-	ListAdminReviews(context.Context) ([]Review, error)
+	ListAdminReviews(context.Context, int, int) ([]Review, int, error)
 	DeleteReview(context.Context, int64) (int64, error)
 }

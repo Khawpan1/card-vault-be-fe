@@ -10,8 +10,8 @@ them as trusted values from a request body, query string, or path parameter.
 
 | Method and path | Purpose |
 | --- | --- |
-| `GET /cards?game=vanguard&q=&type=&rarity=&setName=&rarityExact=&limit=&offset=` | Search the Vanguard catalog. Dropdown filters match the stored set name and rarity exactly. |
-| `GET /cards/filters` | List distinct set names and rarities in PostgreSQL as `{sets, rarities}`. |
+| `GET /cards?game=vanguard&q=&type=&rarity=&setName=&rarityExact=&grade=&nation=&clan=&unit=&limit=&offset=` | Search the Vanguard catalog by name and dropdown values. `clan=__none__` selects cards without a recorded clan. |
+| `GET /cards/filters` | List distinct values as `{sets, rarities, grades, nations, clans, units}`. |
 | `GET /cards/{cardId}` | Read Vanguard card details from PostgreSQL. |
 | `GET /cards/{cardId}/image` | Redirect to a stored TCGTracking image or stream a legacy PokéWallet image through Go. |
 | `GET /decks?game=vanguard&q=` | List public Vanguard decks. |
@@ -50,15 +50,15 @@ All `/admin/*` routes require a verified JWT whose role is `admin`.
 
 | Method and path | Purpose |
 | --- | --- |
-| `POST /admin/cards` | Add a Vanguard card. |
-| `PUT /admin/cards/{cardId}` | Edit a Vanguard card. |
+| `POST /admin/cards` | Add a Vanguard card with optional `grade`, `nation`, `clan`, and `unit`. |
+| `PUT /admin/cards/{cardId}` | Edit a Vanguard card and its attributes. |
 | `DELETE /admin/cards/{cardId}` | Delete a Vanguard card not used by a deck or collection. |
-| `GET /admin/members` | List member profiles without password hashes. |
+| `GET /admin/members?limit=20&offset=0` | List member profiles without password hashes, with the total count. |
 | `PATCH /admin/members/{memberId}/role` | Set `member` or `admin`; actor ID comes from JWT. |
 | `DELETE /admin/members/{memberId}` | Delete a member and dependent records. |
-| `GET /admin/decks` | List Vanguard decks for moderation. |
-| `DELETE /admin/decks/{deckId}` | Remove an inappropriate deck. |
-| `GET /admin/reviews` | List Vanguard reviews for moderation. |
+| `GET /admin/decks?limit=20&offset=0` | List public Vanguard decks for moderation, with the total count. |
+| `DELETE /admin/decks/{deckId}` | Remove an inappropriate public Vanguard deck. |
+| `GET /admin/reviews?limit=20&offset=0` | List Vanguard deck reviews for moderation, with the total count. |
 | `DELETE /admin/reviews/{reviewId}` | Remove an inappropriate review. |
 
 ## Open TCG API fields used by the seed

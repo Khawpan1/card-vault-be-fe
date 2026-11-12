@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
 export default function AuthPage({ mode }) {
   const registering = mode === 'register';
   const { member, login, register } = useAuth();
   const navigate = useNavigate();
+  const { state } = useLocation();
   const [form, setForm] = useState({ displayName: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -20,6 +21,9 @@ export default function AuthPage({ mode }) {
   }
   return <main className="mx-auto max-w-md px-4 py-12"><form onSubmit={submit} className="rounded-xl border border-vault-line bg-vault-surface p-6">
     <p className="text-xs font-bold uppercase tracking-widest text-vault-teal">Vanguard Vault account</p><h1 className="mt-2 text-2xl font-black">{registering ? 'สร้างบัญชีสมาชิก' : 'เข้าสู่ระบบ'}</h1>
+    {state?.deckSessionExpired && <p role="status" className="mt-4 rounded-lg bg-vault-highlight p-3 text-sm text-vault-ink">
+      เซสชันหมดอายุ ร่างเด็คถูกเก็บไว้แล้ว เข้าสู่ระบบด้วยบัญชีเดิมเพื่อจัดเด็คต่อ
+    </p>}
     {registering && <label className="mt-5 block text-sm">ชื่อที่แสดง<input required maxLength="50" value={form.displayName} onChange={(e) => setForm({ ...form, displayName: e.target.value })} className="mt-2 w-full rounded-lg border border-vault-line bg-vault-inset p-3"/></label>}
     <label className="mt-5 block text-sm">อีเมล<input required type="email" autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-2 w-full rounded-lg border border-vault-line bg-vault-inset p-3"/></label>
     <label className="mt-4 block text-sm">รหัสผ่าน<input required type="password" minLength="8" autoComplete={registering ? 'new-password' : 'current-password'} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="mt-2 w-full rounded-lg border border-vault-line bg-vault-inset p-3"/></label>

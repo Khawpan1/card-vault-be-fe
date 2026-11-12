@@ -45,21 +45,25 @@ func (s *Store) UpdatePasswordHash(ctx context.Context, id int64, hash string) e
 	return err
 }
 
-func (s *Store) ListMembers(ctx context.Context) ([]Member, error) {
-	rows, err := s.Pool.Query(ctx, `SELECT id,email,display_name,role FROM members ORDER BY created_at DESC LIMIT 500`)
+func (s *Store) ListMembers(ctx context.Context, limit, offset int) ([]Member, int, error) {
+	var total int
+	if err := s.Pool.QueryRow(ctx, `SELECT count(*) FROM members`).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	rows, err := s.Pool.Query(ctx, `SELECT id,email,display_name,role FROM members ORDER BY created_at DESC,id DESC LIMIT $1 OFFSET $2`, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 	items := make([]Member, 0)
 	for rows.Next() {
 		var item Member
 		if err := rows.Scan(&item.ID, &item.Email, &item.DisplayName, &item.Role); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		items = append(items, item)
 	}
-	return items, rows.Err()
+	return items, total, rows.Err()
 }
 
 func (s *Store) UpdateMemberRole(ctx context.Context, id int64, role string) (Member, error) {

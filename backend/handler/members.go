@@ -141,21 +141,40 @@ func (a *API) adminDeleteReview(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) adminListReviews(w http.ResponseWriter, r *http.Request) {
-	items, err := a.db.ListAdminReviews(r.Context())
+	limit, offset, ok := adminPage(w, r)
+	if !ok {
+		return
+	}
+	items, total, err := a.db.ListAdminReviews(r.Context(), limit, offset)
 	if err != nil {
 		WriteError(w, http.StatusInternalServerError, "server_error", "อ่านรีวิวไม่สำเร็จ")
 		return
 	}
-	WriteJSON(w, http.StatusOK, map[string]any{"items": items, "total": len(items), "limit": 500, "offset": 0})
+	WriteJSON(w, http.StatusOK, map[string]any{"items": items, "total": total, "limit": limit, "offset": offset})
 }
 
 func (a *API) listMembers(w http.ResponseWriter, r *http.Request) {
-	items, err := a.db.ListMembers(r.Context())
+	limit, offset, ok := adminPage(w, r)
+	if !ok {
+		return
+	}
+	items, total, err := a.db.ListMembers(r.Context(), limit, offset)
 	if err != nil {
 		WriteError(w, http.StatusInternalServerError, "server_error", "อ่านรายชื่อสมาชิกไม่สำเร็จ")
 		return
 	}
-	WriteJSON(w, http.StatusOK, map[string]any{"items": items, "total": len(items), "limit": 500, "offset": 0})
+	WriteJSON(w, http.StatusOK, map[string]any{"items": items, "total": total, "limit": limit, "offset": offset})
+}
+
+func adminPage(w http.ResponseWriter, r *http.Request) (int, int, bool) {
+	query := r.URL.Query()
+	limit, limitOK := parseBound(query.Get("limit"), 20, 1, 100)
+	offset, offsetOK := parseBound(query.Get("offset"), 0, 0, 100000)
+	if !limitOK || !offsetOK {
+		WriteError(w, http.StatusBadRequest, "invalid_page", "หน้าที่เลือกไม่ถูกต้อง")
+		return 0, 0, false
+	}
+	return limit, offset, true
 }
 
 func (a *API) updateMemberRole(w http.ResponseWriter, r *http.Request) {

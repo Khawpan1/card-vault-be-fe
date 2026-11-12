@@ -1,17 +1,20 @@
-import { BrowserRouter, Link, NavLink, Route, Routes } from 'react-router-dom';
+import { useState } from 'react';
+import { BrowserRouter, Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import CatalogPage from './pages/CatalogPage';
 import CardPage from './pages/CardPage';
 import AuthPage from './pages/AuthPage';
 import DecksPage from './pages/DecksPage';
 import ProfilePage from './pages/ProfilePage';
-import AdminPage from './pages/AdminPage';
+import AdminPage, { adminSections } from './pages/AdminPage';
 import CollectionPage from './pages/CollectionPage';
 import PublicDeckPage from './pages/PublicDeckPage';
 import ProtectedRoute from './auth/ProtectedRoute';
 
 function Header() {
   const { member, logout } = useAuth();
+  const { pathname } = useLocation();
+  const [adminOpen, setAdminOpen] = useState(false);
   const navClass = ({ isActive }) => `rounded-lg px-3 py-2 transition-colors ${isActive ? 'bg-vault-highlight font-semibold text-vault-gold' : 'text-vault-muted hover:bg-vault-inset hover:text-vault-ink'}`;
   return (
     <header className="sticky top-0 z-20 border-b border-vault-line bg-vault-surface shadow-sm">
@@ -24,7 +27,17 @@ function Header() {
             <NavLink to="/my/decks" className={navClass}>เด็คของฉัน</NavLink>
             <NavLink to="/collection" className={navClass}>คอลเลกชัน</NavLink>
             <NavLink to="/profile" className={navClass}>โปรไฟล์</NavLink>
-            {member.role === 'admin' && <NavLink to="/admin" className={navClass}>จัดการระบบ</NavLink>}
+            {member.role === 'admin' && <div className="relative" onKeyDown={(event) => {
+              if (event.key === 'Escape') setAdminOpen(false);
+            }}>
+              <button type="button" aria-expanded={adminOpen} aria-controls="admin-navigation"
+                className={navClass({ isActive: pathname.startsWith('/admin') })}
+                onClick={() => setAdminOpen(!adminOpen)}>จัดการระบบ <span aria-hidden="true">▾</span></button>
+              {adminOpen && <div id="admin-navigation" className="absolute right-0 z-30 mt-2 grid w-52 gap-1 rounded-xl border border-vault-line bg-vault-surface p-2 shadow-lg">
+                {adminSections.map(([key, label]) => <NavLink key={key} to={`/admin/${key}`} className={navClass}
+                  onClick={() => setAdminOpen(false)}>{label}</NavLink>)}
+              </div>}
+            </div>}
             <button className="ml-1 rounded-lg border border-vault-gold/70 px-3 py-2 font-semibold text-vault-gold hover:bg-vault-highlight" onClick={logout}>ออกจากระบบ</button>
           </> : <Link to="/login" className="ml-1 rounded-lg bg-vault-orange px-4 py-2 font-bold text-white hover:bg-vault-orange-hover">เข้าสู่ระบบ</Link>}
         </nav>
@@ -49,15 +62,18 @@ export default function App() {
     <Route path="/" element={<HomePage/>}/>
     <Route path="/cards" element={<CatalogPage/>}/>
     <Route path="/cards/:cardId" element={<CardPage/>}/>
-    <Route path="/decks" element={<DecksPage publicOnly/>}/>
+    <Route path="/decks" element={<DecksPage key="public-decks" publicOnly/>}/>
     <Route path="/decks/:deckId" element={<PublicDeckPage/>}/>
     <Route path="/login" element={<AuthPage mode="login"/>}/>
     <Route path="/register" element={<AuthPage mode="register"/>}/>
     <Route element={<ProtectedRoute/>}>
-      <Route path="/my/decks" element={<DecksPage/>}/>
+      <Route path="/my/decks" element={<DecksPage key="member-decks"/>}/>
       <Route path="/collection" element={<CollectionPage/>}/>
       <Route path="/profile" element={<ProfilePage/>}/>
-      <Route path="/admin" element={<ProtectedRoute admin/>}><Route index element={<AdminPage/>}/></Route>
+      <Route path="/admin" element={<ProtectedRoute admin/>}>
+        <Route index element={<AdminPage/>}/>
+        <Route path=":section" element={<AdminPage/>}/>
+      </Route>
     </Route>
     <Route path="*" element={<main className="p-12 text-center">ไม่พบหน้าที่ต้องการ</main>}/>
   </Routes><footer className="mt-16 border-t border-vault-line bg-vault-surface px-4 py-6 text-center text-xs text-vault-muted">ข้อมูลและรูปการ์ดจาก <a href="https://openapi.tcgtracking.com/tcgapi/" target="_blank" rel="noreferrer" className="underline">Open TCG API (TCGTracking)</a> · การ์ดเดิมจาก PokéWallet</footer></div></BrowserRouter></AuthProvider>;

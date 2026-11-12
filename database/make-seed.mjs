@@ -5,6 +5,7 @@ import { setTimeout as wait } from 'node:timers/promises';
 const API = 'https://openapi.tcgtracking.com/v1/16';
 const CACHE = new URL('./.make-seed-progress/open-tcg/', import.meta.url);
 const OUTPUT = new URL('./seed.sql', import.meta.url);
+const ATTRIBUTES = new URL('./card-attributes.sql', import.meta.url);
 const limits = { name: 255, type: 255, rarity: 100, setName: 255, setCode: 50 };
 
 async function getJSON(path) {
@@ -65,6 +66,19 @@ function sql(value) {
   return `'${String(value).replaceAll('\0', '').replace(/[^\S\r\n]+$/gm, '').replaceAll("'", "''")}'`;
 }
 
+function attribute(value) {
+  const text = String(value ?? '').trim();
+  return /^(none|n\/a|-)$/i.test(text) ? '' : text;
+}
+
+const units = {
+  Normal: 'Normal Unit',
+  Nornal: 'Normal Unit',
+  Trigger: 'Trigger Unit',
+  G: 'G Unit',
+  'G-Guardian': 'G Guardian',
+};
+
 const { sets } = await getJSON('/sets');
 if (!Array.isArray(sets) || !sets.length || sets.some((set) => !Number.isSafeInteger(set.id))) {
   throw new Error('อ่านรายการเซ็ต Vanguard ไม่สำเร็จ');
@@ -85,6 +99,11 @@ for (const [index, set] of sets.entries()) {
       name: product.name.trim(),
       type: [info.unit, info.nation, info.clan].filter(Boolean).join(' · ') || 'ไม่ระบุ',
       rarity: product.rarity || info.raritydbname || 'ไม่ระบุ',
+      grade: attribute(info.grade),
+      nation: attribute(info.nation).replace('United Sanctary', 'United Sanctuary')
+        .split('/').map((name) => name.trim()).join('/'),
+      clan: attribute(info.clan),
+      unit: units[attribute(info.unit)] || attribute(info.unit),
       rulesText: plainText(info.description),
       imageUrl: product.image_url || '',
       setName: set.name || null,
@@ -122,7 +141,24 @@ for (let offset = 0; offset < rows.length; offset += 500) {
   );
 }
 lines.push('COMMIT;', '');
-await save(OUTPUT, lines.join('\n'));
+if (!process.argv.includes('--attributes-only')) await save(OUTPUT, lines.join('\n'));
+
+// เติมเฉพาะฟิลด์ใหม่ให้การ์ดเดิมตามรหัสต้นทาง โดยไม่เปลี่ยนรหัสการ์ดในเด็ค
+const attributeLines = ['-- สร้างจาก Open TCG API ด้วย database/make-seed.mjs',
+  'BEGIN;', 'SET LOCAL standard_conforming_strings = on;'];
+for (let offset = 0; offset < rows.length; offset += 500) {
+  const values = rows.slice(offset, offset + 500).map((card) =>
+    `(${[card.sourceId, card.grade, card.nation, card.clan, card.unit].map(sql).join(', ')})`);
+  attributeLines.push(
+    'UPDATE public.cards AS c SET grade = a.grade, nation = a.nation, clan = a.clan, unit = a.unit',
+    'FROM (VALUES',
+    values.join(',\n'),
+    ') AS a(source_id, grade, nation, clan, unit)',
+    "WHERE c.game = 'vanguard' AND c.source_id = a.source_id;",
+  );
+}
+attributeLines.push('COMMIT;', '');
+await save(ATTRIBUTES, attributeLines.join('\n'));
 console.log(JSON.stringify({
   sets: sets.length,
   cards: rows.length,

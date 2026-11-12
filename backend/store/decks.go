@@ -136,24 +136,30 @@ func (s *Store) ReplaceDeckCards(ctx context.Context, deckID, memberID int64, ca
 	return tx.Commit(ctx)
 }
 
-func (s *Store) ListAdminDecks(ctx context.Context) ([]Deck, error) {
-	rows, err := s.Pool.Query(ctx, `SELECT d.id,d.game,d.name,d.description,d.is_public,m.display_name FROM decks d JOIN members m ON m.id=d.member_id WHERE d.game='vanguard' ORDER BY d.updated_at DESC LIMIT 500`)
+func (s *Store) ListAdminDecks(ctx context.Context, limit, offset int) ([]Deck, int, error) {
+	const where = ` FROM decks d JOIN members m ON m.id=d.member_id WHERE d.game='vanguard' AND d.is_public`
+	var total int
+	if err := s.Pool.QueryRow(ctx, `SELECT count(*)`+where).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	rows, err := s.Pool.Query(ctx, `SELECT d.id,d.game,d.name,d.description,d.is_public,m.display_name`+where+
+		` ORDER BY d.updated_at DESC,d.id DESC LIMIT $1 OFFSET $2`, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 	items := make([]Deck, 0)
 	for rows.Next() {
 		var item Deck
 		if err := rows.Scan(&item.ID, &item.Game, &item.Name, &item.Description, &item.IsPublic, &item.MemberName); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		items = append(items, item)
 	}
-	return items, rows.Err()
+	return items, total, rows.Err()
 }
 
 func (s *Store) DeleteDeck(ctx context.Context, id int64) (int64, error) {
-	result, err := s.Pool.Exec(ctx, `DELETE FROM decks WHERE id=$1 AND game='vanguard'`, id)
+	result, err := s.Pool.Exec(ctx, `DELETE FROM decks WHERE id=$1 AND game='vanguard' AND is_public`, id)
 	return result.RowsAffected(), err
 }

@@ -11,7 +11,9 @@
 - `backend/` Go API แบ่ง `cmd/server/`, `handler/`, `store/`, `mw/` และ `auth/`
 - `database/` PostgreSQL schema, migrations, API contract และ seed script
 
-หน้า React ใช้ Fetch เรียก Go API เพื่อค้นหาการ์ดตามชื่อ และเลือกชุดการ์ดหรือความหายากจากรายการที่อ่านจาก PostgreSQL
+หน้า React ใช้ Fetch เรียก Go API เพื่อค้นหาการ์ดตามชื่อ ชุด ความหายาก เกรด เนชั่น แคลน และยูนิท
+
+หน้าจัดเด็คเก็บร่างล่าสุดแยกตามบัญชีในเบราว์เซอร์ เมื่อเซสชันหมดอายุ ให้เข้าสู่ระบบด้วยบัญชีเดิมบนเบราว์เซอร์เดิมเพื่อจัดต่อ
 
 ## แหล่งข้อมูลและรูป
 
@@ -28,6 +30,7 @@
 
    ```powershell
    psql -h localhost -U postgres -d cardvault -v ON_ERROR_STOP=1 -f database/seed.sql
+   psql -h localhost -U postgres -d cardvault -v ON_ERROR_STOP=1 -f database/card-attributes.sql
    ```
 
 3. ตั้งค่าและรัน Backend:
@@ -63,6 +66,8 @@
 
 Seed เก็บการ์ดที่เด็คและคอลเลกชันเดิมอ้างถึงไว้ การ์ดเดิมอาจมีชื่อเดียวกับรายการจาก Open TCG เพราะแต่ละแหล่งใช้รหัสต่างกัน
 
+สำหรับฐานข้อมูล Vanguard ที่มีข้อมูลแล้ว ให้รัน `database/migrations/004_card_attributes.sql` แล้วรัน `database/card-attributes.sql` เพื่อเติมฟิลด์ตัวกรองตามรหัสต้นทาง โดยคงรหัสการ์ดและรายการเด็คเดิม
+
 ## Environment variables
 
 ดูชื่อค่าที่ต้องตั้งใน `backend/.env.example` และ `frontend/.env.example`. ค่าลับที่ต้องมีคือ `DATABASE_URL`, `JWT_SECRET` (อย่างน้อย 32 ตัวอักษร). ใช้ `POKEWALLET_API_KEY` เฉพาะรูปของการ์ดเดิมจาก PokéWallet
@@ -87,5 +92,5 @@ Seed เก็บการ์ดที่เด็คและคอลเลก
 - [x] สร้าง seed จากข้อมูล Vanguard ทุกเซ็ตใน Open TCG API
 - [x] ตรวจการนำเข้าบน Supabase ครบ 26,492 รายการจาก Open TCG และทดสอบค้นหา รายละเอียด และรูปผ่าน Render
 - [x] Deploy เว็บธีมสว่างบน Vercel และ Go API บน Render แล้ว
-- [x] React Unit Test ผ่าน 7 รายการ รวมตัวกรอง การเปลี่ยนหน้า และการจำกัดการ์ดในเด็ค
+- [x] React Unit Test ผ่าน 9 รายการ รวมตัวกรอง การเปลี่ยนหน้า การจำกัดการ์ด และการกู้ร่างเด็คหลังเซสชันหมดอายุ
 - [ ] ทบทวนการสาธิตด้วยบัญชีจริงของทีม
