@@ -85,9 +85,9 @@ func (s *Store) DeckByID(ctx context.Context, id int64) (Deck, error) {
 	return item, rows.Err()
 }
 
-func (s *Store) CreateDeck(ctx context.Context, memberID int64, game, name, description string, isPublic bool) (Deck, error) {
+func (s *Store) CreateDeck(ctx context.Context, memberID int64, name, description string, isPublic bool) (Deck, error) {
 	var item Deck
-	err := s.Pool.QueryRow(ctx, `INSERT INTO decks(member_id,game,name,description,is_public) VALUES($1,$2,$3,$4,$5) RETURNING id,game,name,description,is_public`, memberID, game, name, description, isPublic).Scan(&item.ID, &item.Game, &item.Name, &item.Description, &item.IsPublic)
+	err := s.Pool.QueryRow(ctx, `INSERT INTO decks(member_id,game,name,description,is_public) VALUES($1,'vanguard',$2,$3,$4) RETURNING id,game,name,description,is_public`, memberID, name, description, isPublic).Scan(&item.ID, &item.Game, &item.Name, &item.Description, &item.IsPublic)
 	return item, err
 }
 

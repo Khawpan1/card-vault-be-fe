@@ -23,20 +23,20 @@
 
 สคริปต์เก็บผลของเซ็ตที่อ่านแล้วใน `database/.make-seed-progress/open-tcg/` เพื่อรันต่อได้ ใช้ `node database/make-seed.mjs --refresh` เพื่อดึงข้อมูลล่าสุดทุกเซ็ต
 
-## รันในเครื่อง (PowerShell)
+## รันในเครื่องด้วยฐานข้อมูล Supabase (PowerShell)
 
-1. สร้างฐานข้อมูล PostgreSQL และรัน `database/schema.sql` สำหรับฐานข้อมูลใหม่
-2. นำเข้าไฟล์ seed ที่อยู่ใน repo หากต้องการดึงข้อมูลจากต้นทางใหม่ ให้รันคำสั่ง `node database/make-seed.mjs --refresh` ก่อนนำเข้า
+1. เปิด Supabase → Connect → Session pooler แล้วตั้ง `DATABASE_URL` ด้วย URI ของโปรเจกต์ ใส่รหัสผ่านฐานข้อมูลแทน placeholder และกำหนด `sslmode=require`
+2. สำหรับฐานข้อมูลใหม่ ให้รัน schema และ seed จากโฟลเดอร์โปรเจกต์ หากฐานข้อมูลมีข้อมูลอยู่แล้ว ให้ดูขั้นตอนย้ายฐานข้อมูลด้านล่าง
 
    ```powershell
-   psql -h localhost -U postgres -d cardvault -v ON_ERROR_STOP=1 -f database/seed.sql
-   psql -h localhost -U postgres -d cardvault -v ON_ERROR_STOP=1 -f database/card-attributes.sql
+   psql $env:DATABASE_URL -v ON_ERROR_STOP=1 -f database/schema.sql
+   psql $env:DATABASE_URL -v ON_ERROR_STOP=1 -f database/seed.sql
+   psql $env:DATABASE_URL -v ON_ERROR_STOP=1 -f database/card-attributes.sql
    ```
 
 3. ตั้งค่าและรัน Backend:
 
    ```powershell
-   $env:DATABASE_URL = "postgres://postgres:password@localhost:5432/cardvault?sslmode=disable"
    $env:JWT_SECRET = "ใส่-secret-สุ่มที่ยาวอย่างน้อย-32-ตัวอักษร"
    $env:FRONTEND_ORIGIN = "http://localhost:3000"
    cd backend
@@ -60,7 +60,7 @@
 
    จากนั้นออกจากระบบและเข้าสู่ระบบใหม่เพื่อรับ token ที่มี role ล่าสุด
 
-## ย้ายฐานข้อมูลรุ่นหลายเกม
+## อัปเดตฐานข้อมูลเดิม
 
 สำหรับฐานข้อมูลรุ่นหลายเกม ให้สำรองข้อมูลแล้วรัน `database/migrations/003_vanguard_only.sql` หนึ่งครั้ง จากนั้นใช้ `psql` เชื่อมต่อ Supabase ผ่าน Session pooler และรันไฟล์ `database/seed.sql` ด้วย `-v ON_ERROR_STOP=1` ใช้ `schema.sql` สำหรับฐานข้อมูลใหม่
 
@@ -75,8 +75,8 @@ Seed เก็บการ์ดที่เด็คและคอลเลก
 ## Deploy
 
 - Frontend: Vercel, Root Directory `frontend`; ตั้ง `REACT_APP_API_URL` เป็น URL backend ต่อท้าย `/api`.
-- Backend: Render, Root Directory `backend`; Build Command `go build -o app ./cmd/server`; Start Command `./app`; ตั้ง `DATABASE_URL`, `JWT_SECRET` และ `FRONTEND_ORIGIN` ใน Environment.
-- Database: Supabase PostgreSQL; รัน migration สำหรับฐานเดิมและนำ seed SQL ที่สร้างแล้วเข้า database.
+- Backend บน Render ใช้ Web Service เชื่อม GitHub สาขา `main` โดยตั้ง Root Directory เป็น `backend`, Build Command เป็น `go build -o app ./cmd/server` และ Start Command เป็น `./app` ตั้ง `DATABASE_URL`, `JWT_SECRET` และ `FRONTEND_ORIGIN=https://frontend-wheat-kappa-70.vercel.app` ใน Environment
+- Database ใช้ Supabase PostgreSQL ตามขั้นตอนสำหรับฐานข้อมูลใหม่หรือฐานข้อมูลเดิมด้านบน
 
 ## ขอบเขตและเครดิต
 

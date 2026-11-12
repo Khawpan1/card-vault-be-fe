@@ -1,4 +1,4 @@
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+import { API_URL } from './api';
 
 export function cardImageUrl(card) {
   if (card.imageUrl?.startsWith('https://api.pokewallet.io/cfv/images/')) {

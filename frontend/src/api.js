@@ -1,4 +1,4 @@
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
 export async function request(path, options = {}) {
   // แนบตั๋วจากการล็อกอินให้ Backend ตรวจสิทธิ์
@@ -7,8 +7,7 @@ export async function request(path, options = {}) {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
     }
   });
   const body = response.status === 204 ? null : await response.json();

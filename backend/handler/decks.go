@@ -10,8 +10,6 @@ import (
 	"card-vault/backend/store"
 )
 
-type deck = store.Deck
-
 const maxDeckCardCopies = 4
 
 func (a *API) listPublicDecks(w http.ResponseWriter, r *http.Request) {
@@ -82,7 +80,7 @@ func (a *API) createDeck(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusBadRequest, "invalid_input", "กรุณากรอกชื่อเด็คและเกมให้ถูกต้อง")
 		return
 	}
-	item, err := a.db.CreateDeck(r.Context(), mw.Current(r).MemberID, trim(input.Game), trim(input.Name), trim(input.Description), input.IsPublic)
+	item, err := a.db.CreateDeck(r.Context(), mw.Current(r).MemberID, trim(input.Name), trim(input.Description), input.IsPublic)
 	if err != nil {
 		WriteError(w, http.StatusInternalServerError, "server_error", "สร้างเด็คไม่สำเร็จ")
 		return

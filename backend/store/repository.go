@@ -24,7 +24,7 @@ type Repository interface {
 	ListPublicDecks(context.Context, string) ([]Deck, error)
 	ListMemberDecks(context.Context, int64) ([]Deck, error)
 	DeckByID(context.Context, int64) (Deck, error)
-	CreateDeck(context.Context, int64, string, string, string, bool) (Deck, error)
+	CreateDeck(context.Context, int64, string, string, bool) (Deck, error)
 	UpdateMemberDeck(context.Context, int64, int64, string, string, bool) (int64, error)
 	DeleteMemberDeck(context.Context, int64, int64) (int64, error)
 	ReplaceDeckCards(context.Context, int64, int64, []DeckCard) error
