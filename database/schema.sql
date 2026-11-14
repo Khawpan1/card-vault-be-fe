@@ -14,7 +14,7 @@ CREATE TABLE members (
 
 CREATE UNIQUE INDEX uq_members_email_lower ON members (lower(email));
 
--- source_id เก็บรหัสต้นทางเดิม ซึ่งแต่ละเกมมีรูปแบบรหัสต่างกัน
+-- source_id เก็บรหัสการ์ดจากแหล่งข้อมูลเดิม
 CREATE TABLE cards (
     id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     game        VARCHAR(20) NOT NULL
@@ -93,5 +93,13 @@ CREATE TABLE reviews (
 );
 
 CREATE INDEX idx_reviews_deck_created ON reviews (deck_id, created_at DESC);
+
+-- ให้เข้าฐานข้อมูลผ่าน Go API
+ALTER TABLE public.members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.cards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.decks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.deck_cards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.collection_cards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 
 COMMIT;

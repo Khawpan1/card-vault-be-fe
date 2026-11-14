@@ -12,8 +12,6 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-type safeMember = store.Member
-
 func validEmail(email string) bool {
 	if len(email) > 255 {
 		return false
@@ -83,7 +81,7 @@ func (a *API) login(w http.ResponseWriter, r *http.Request) {
 	a.writeLogin(w, member, http.StatusOK)
 }
 
-func (a *API) writeLogin(w http.ResponseWriter, member safeMember, status int) {
+func (a *API) writeLogin(w http.ResponseWriter, member store.Member, status int) {
 	token, err := auth.Issue(a.secret, member.ID, member.Role)
 	if err != nil {
 		WriteError(w, http.StatusInternalServerError, "server_error", "เข้าสู่ระบบไม่สำเร็จ")

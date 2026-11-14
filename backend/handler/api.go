@@ -17,7 +17,7 @@ import (
 )
 
 type API struct {
-	db             store.Repository
+	db             *store.Store
 	secret         []byte
 	frontendOrigin string
 	pokewalletKey  string
@@ -31,7 +31,7 @@ type cachedImage struct {
 	expiresAt   time.Time
 }
 
-func New(db store.Repository, secret []byte, frontendOrigin, pokewalletKey string) *API {
+func New(db *store.Store, secret []byte, frontendOrigin, pokewalletKey string) *API {
 	if frontendOrigin == "" {
 		frontendOrigin = "http://localhost:3000"
 	}

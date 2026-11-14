@@ -49,9 +49,9 @@ function Header() {
 function HomePage() {
   return <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
     <section className="overflow-hidden rounded-3xl border border-vault-line bg-gradient-to-br from-vault-hero via-vault-surface to-vault-highlight px-6 py-14 shadow-sm sm:px-12 sm:py-20">
-      <p className="text-xs font-bold uppercase tracking-[.25em] text-vault-gold">Cardfight!! Vanguard · Card Archive</p>
-      <h1 className="mt-5 max-w-3xl text-4xl font-black leading-tight sm:text-6xl">เปิดคลังการ์ด<br/><span className="text-vault-orange">แล้วจัดเด็คของคุณ</span></h1>
-      <p className="mt-5 max-w-xl leading-7 text-vault-muted">ค้นหาการ์ด Vanguard ดูรายละเอียด และเลือกการ์ดจากภาพเพื่อสร้างเด็คของคุณ</p>
+      <p className="text-xs font-bold uppercase tracking-[.25em] text-vault-gold">Cardfight!! Vanguard</p>
+      <h1 className="mt-5 max-w-3xl text-4xl font-black leading-tight sm:text-6xl">คลังการ์ดและจัดเด็ค</h1>
+      <p className="mt-5 max-w-xl leading-7 text-vault-muted">ค้นหาการ์ดตามชื่อหรือชุด แล้วเลือกการ์ดจากรูปเพื่อจัดเด็ค</p>
       <div className="mt-8 flex flex-wrap gap-3"><Link to="/cards" className="rounded-xl bg-vault-orange px-5 py-3 font-bold text-white hover:bg-vault-orange-hover">เปิดคลังการ์ด <span aria-hidden="true">→</span></Link><Link to="/decks" className="rounded-xl border border-vault-line bg-vault-surface px-5 py-3 font-bold text-vault-ink hover:bg-vault-inset">ดูเด็คสาธารณะ</Link></div>
     </section>
   </main>;

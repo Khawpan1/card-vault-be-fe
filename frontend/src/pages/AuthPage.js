@@ -20,7 +20,7 @@ export default function AuthPage({ mode }) {
     } catch (err) { setError(err.message); } finally { setBusy(false); }
   }
   return <main className="mx-auto max-w-md px-4 py-12"><form onSubmit={submit} className="rounded-xl border border-vault-line bg-vault-surface p-6">
-    <p className="text-xs font-bold uppercase tracking-widest text-vault-teal">Vanguard Vault account</p><h1 className="mt-2 text-2xl font-black">{registering ? 'สร้างบัญชีสมาชิก' : 'เข้าสู่ระบบ'}</h1>
+    <h1 className="text-2xl font-black">{registering ? 'สร้างบัญชีสมาชิก' : 'เข้าสู่ระบบ'}</h1>
     {state?.deckSessionExpired && <p role="status" className="mt-4 rounded-lg bg-vault-highlight p-3 text-sm text-vault-ink">
       เซสชันหมดอายุ ร่างเด็คถูกเก็บไว้แล้ว เข้าสู่ระบบด้วยบัญชีเดิมเพื่อจัดเด็คต่อ
     </p>}
